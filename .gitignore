@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+dist/
+*.local
+
+# Environment
+.env
+.env.local
+
+# TLS (lokal)
+certs/*
+!certs/README.txt
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store

@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prompt-db-config
+  namespace: prompt-db
+data:
+  POSTGRES_DB: promptdb
+  POSTGRES_USER: promptdb
+  ALLOW_REGISTRATION: "true"
+  CORS_ORIGINS: "https://prompt-db.example.com"
+  ENVIRONMENT: production
+  TRUST_PROXY_HEADERS: "true"
+  VITE_API_URL: "https://api.prompt-db.example.com"

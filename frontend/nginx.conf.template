@@ -1,0 +1,24 @@
+server {
+    listen 8080;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src ${CONNECT_SRC}; frame-ancestors 'none'; base-uri 'self'; form-action 'self';" always;
+
+    include /etc/nginx/conf.d/api-locations.inc;
+    include /etc/nginx/conf.d/nginx-extra.inc;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location /health {
+        access_log off;
+        return 200 "ok\n";
+        add_header Content-Type text/plain;
+    }
+}

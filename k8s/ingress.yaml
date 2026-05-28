@@ -1,0 +1,36 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prompt-db
+  namespace: prompt-db
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "2m"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - prompt-db.example.com
+        - api.prompt-db.example.com
+      secretName: prompt-db-tls
+  rules:
+    - host: prompt-db.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: prompt-db-frontend
+                port:
+                  number: 80
+    - host: api.prompt-db.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: prompt-db-backend
+                port:
+                  number: 8000

@@ -1,0 +1,89 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: version
+        run: |
+          if [ -n "${GITHUB_REF_NAME#v}" ]; then
+            APP_VERSION="${GITHUB_REF_NAME#v}"
+          else
+            APP_VERSION="$(tr -d '[:space:]' < VERSION)"
+          fi
+          echo "app_version=${APP_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Version: ${APP_VERSION}"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/prompt-db-backend:${{ steps.version.outputs.app_version }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/prompt-db-backend:latest
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/prompt-db-backend:${{ github.sha }}
+
+      - name: Build and push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: frontend/Dockerfile
+          push: true
+          build-args: |
+            VITE_API_URL=${{ vars.VITE_API_URL }}
+            APP_VERSION=${{ steps.version.outputs.app_version }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/prompt-db-frontend:${{ steps.version.outputs.app_version }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/prompt-db-frontend:latest
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/prompt-db-frontend:${{ github.sha }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          body: |
+            ## Container-Images
+
+            | Komponente | Image |
+            |------------|-------|
+            | Backend | `${{ env.REGISTRY }}/${{ github.repository_owner }}/prompt-db-backend:${{ steps.version.outputs.app_version }}` |
+            | Frontend | `${{ env.REGISTRY }}/${{ github.repository_owner }}/prompt-db-frontend:${{ steps.version.outputs.app_version }}` |
+
+            Zusätzliche Tags: `${{ github.sha }}`, `latest`
+
+            ## Deployment
+
+            ```bash
+            export REGISTRY=${{ env.REGISTRY }}/${{ github.repository_owner }}
+            export TAG=${{ steps.version.outputs.app_version }}
+
+            kubectl set image deployment/prompt-db-backend \
+              backend=${REGISTRY}/prompt-db-backend:${TAG} -n prompt-db
+            kubectl set image deployment/prompt-db-frontend \
+              frontend=${REGISTRY}/prompt-db-frontend:${TAG} -n prompt-db
+            ```

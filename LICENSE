@@ -1,0 +1,82 @@
+Prompt DB – Open-Source-Lizenz (nicht-kommerziell)
+
+Copyright (c) 2026 Julian Kramer
+
+================================================================================
+DEUTSCH
+================================================================================
+
+1. Gewährung
+
+   Jede Person, die eine Kopie dieser Software und der zugehörigen
+   Dokumentation (nachfolgend „Software“) erhält, darf die Software
+   kostenfrei nutzen, unter den Bedingungen dieser Lizenz.
+
+2. Erlaubt (nicht-kommerziell)
+
+   Sie dürfen die Software:
+
+   - privat und in Organisationen ohne kommerziellen Zweck nutzen;
+   - studieren, testen und für nicht-kommerzielle Projekte einsetzen;
+   - verändern und abgeleitete Werke erstellen;
+   - Quellcode und abgeleitete Werke veröffentlichen und weitergeben,
+
+   sofern alle Bedingungen dieser Lizenz eingehalten werden.
+
+3. Verboten
+
+   Ohne ausdrückliche schriftliche Zustimmung des Urheberrechtsinhabers ist
+   es untersagt:
+
+   a) Kommerzielle Nutzung – jede Nutzung, die primär oder unmittelbar der
+      Erzielung von Einnahmen, der Vermarktung, dem Verkauf, der
+      Bereitstellung gegen Entgelt oder der Unterstützung kommerzieller
+      Dienstleistungen dient;
+
+   b) Relizenzierung – die Software oder Teile davon unter einer anderen
+      Lizenz, anderen Nutzungsbedingungen oder als eigenes Produkt
+      weiterzugeben, weiterzulizenzieren oder neu zu zertifizieren;
+
+   c) Entfernung von Hinweisen – Copyright-, Lizenz- oder Urheberangaben zu
+      entfernen oder zu verfälschen;
+
+   d) Markenrechte – den Namen „Prompt DB“, Logos oder andere Kennzeichen
+      des Urheberrechtsinhabers ohne Zustimmung zu verwenden.
+
+4. Weitergabe abgeleiteter Werke
+
+   Werden abgeleitete Werke veröffentlicht oder weitergegeben, müssen diese
+   unter denselben Bedingungen wie diese Lizenz stehen. Eine Änderung der
+   Lizenzbedingungen ist nicht zulässig.
+
+5. Keine Garantie
+
+   DIE SOFTWARE WIRD „WIE BESEHEN“ BEREITGESTELLT, OHNE JEGLICHE AUSDRÜCKLICHE
+   ODER STILLSCHWEIGENDE GEWÄHRLEISTUNG, EINSCHLIESSLICH, ABER NICHT
+   BESCHRÄNKT AUF GEWÄHRLEISTUNG DER MARKTGÄNGIGKEIT, EIGNUNG FÜR EINEN
+   BESTIMMTEN ZWECK UND NICHTVERLETZUNG VON RECHTEN DRITTER.
+
+6. Haftungsbeschränkung
+
+   DER URHEBERRECHTSINHABER HAFTET NICHT FÜR ANSPRÜCHE, SCHÄDEN ODER SONSTIGE
+   HAFTUNG, DIE AUS DER NUTZUNG DER SOFTWARE ENTSTEHEN.
+
+7. Kommerzielle Nutzung
+
+   Für kommerzielle Nutzung, Weiterlizenzierung oder Integration in
+   kommerzielle Produkte ist eine separate schriftliche Vereinbarung mit dem
+   Urheberrechtsinhaber erforderlich.
+
+================================================================================
+ENGLISH (informative summary – German text is legally controlling)
+================================================================================
+
+You may use, modify, and share this software for non-commercial purposes
+only, provided you keep this license and copyright notices intact and do not
+relicense the software under different terms.
+
+Commercial use, relicensing, and offering the software (or derivatives) under
+another license or as a separately certified product are prohibited without
+written permission from the copyright holder.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.

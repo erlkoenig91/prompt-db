@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prompt-db-frontend
+  namespace: prompt-db
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: prompt-db-frontend
+  template:
+    metadata:
+      labels:
+        app: prompt-db-frontend
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        fsGroup: 101
+      containers:
+        - name: frontend
+          image: ghcr.io/erlkoenig91/prompt-db-frontend:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: prompt-db-config
+          env:
+            - name: API_PUBLIC_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: prompt-db-config
+                  key: VITE_API_URL
+            - name: API_UPSTREAM
+              value: "http://prompt-db-backend:8000"
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: 64Mi
+              cpu: 50m
+            limits:
+              memory: 128Mi
+              cpu: 200m
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prompt-db-frontend
+  namespace: prompt-db
+spec:
+  selector:
+    app: prompt-db-frontend
+  ports:
+    - port: 80
+      targetPort: 8080

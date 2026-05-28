@@ -1,0 +1,3 @@
+    location = /config.js {
+        add_header Cache-Control "no-store";
+    }
