@@ -1,8 +1,14 @@
+<p align="center">
+  <img src="logo.png" alt="Prompt DB Logo" width="192">
+</p>
+
 # Prompt DB
 
 Persönliche Prompt-Datenbank mit Web-Oberfläche: Prompts mit Metadaten (Modell, Aufgabe, Tags, Sichtbarkeit) erstellen, privat speichern oder öffentlich teilen.
 
 Repository: [github.com/erlkoenig91/prompt-db](https://github.com/erlkoenig91/prompt-db)
+
+**Social Preview:** Bild für Link-Vorschauen liegt unter [`.github/social-preview.png`](.github/social-preview.png) (1280×640). Einmalig unter *Settings → General → Social preview* hochladen.
 
 [![CI](https://github.com/erlkoenig91/prompt-db/actions/workflows/ci.yml/badge.svg)](https://github.com/erlkoenig91/prompt-db/actions/workflows/ci.yml)
 [![License: Non-Commercial](https://img.shields.io/badge/License-Non--Commercial-orange.svg)](LICENSE)
