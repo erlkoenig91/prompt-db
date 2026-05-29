@@ -44,3 +44,9 @@ async def get_optional_user(
     if not user or not user.is_active:
         return None
     return user
+
+
+async def get_admin_user(current_user: User = Depends(get_current_user)) -> User:
+    if not current_user.is_admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Administratorrechte erforderlich")
+    return current_user

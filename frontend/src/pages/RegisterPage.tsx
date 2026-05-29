@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { api, ApiError } from "../api";
 import { useAuth } from "../AuthContext";
 import BrandLogo from "../components/BrandLogo";
@@ -30,9 +30,13 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [allowRegistration, setAllowRegistration] = useState<boolean | null>(null);
 
   useEffect(() => {
     api.meta().then(setMeta).catch(() => setMeta(FALLBACK_META));
+    api.publicSettings().then((s) => setAllowRegistration(s.allow_registration)).catch(() => {
+      setAllowRegistration(true);
+    });
   }, []);
 
   const passwordOk = allRulesMet(meta.password_rules, password, checkPasswordRule);
@@ -51,6 +55,10 @@ export default function RegisterPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (allowRegistration === false) {
+    return <Navigate to="/login" replace />;
   }
 
   return (

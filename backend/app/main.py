@@ -14,7 +14,7 @@ from app.version import get_version
 from app.constants import DEFAULT_MODELS, PASSWORD_RULES, TASKS, USERNAME_RULES
 from app.database import AsyncSessionLocal, engine, get_db
 from app.models import Prompt, User
-from app.routers import auth, prompts
+from app.routers import auth, prompts, settings as settings_router, stats, users
 from app.routers.auth import limiter
 from app.schemas import MetaResponse, TaskOption
 
@@ -92,3 +92,6 @@ async def meta(db: AsyncSession = Depends(get_db)) -> MetaResponse:
 
 app.include_router(auth.router, prefix="/api")
 app.include_router(prompts.router, prefix="/api")
+app.include_router(stats.router, prefix="/api")
+app.include_router(settings_router.router, prefix="/api")
+app.include_router(users.router, prefix="/api")

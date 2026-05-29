@@ -3,8 +3,7 @@ import { api, ApiError } from "../api";
 import { useAuth } from "../AuthContext";
 import PromptCard from "../components/PromptCard";
 import ViewModeSwitch from "../components/ViewModeSwitch";
-import BrandLogo from "../components/BrandLogo";
-import AppVersion from "../components/AppVersion";
+import AppHeader from "../components/AppHeader";
 import type { Meta, Prompt, PromptInput } from "../types";
 import { loadViewMode, saveViewMode, type ViewMode } from "../viewMode";
 
@@ -23,9 +22,10 @@ function taskLabel(meta: Meta | null, task: string) {
 }
 
 export default function DashboardPage() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [meta, setMeta] = useState<Meta | null>(null);
+  const [defaultVisibility, setDefaultVisibility] = useState<"private" | "public">("private");
   const [scope, setScope] = useState<"all" | "mine" | "public">("all");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
@@ -72,12 +72,33 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
+    if (!user) return;
+    let active = true;
+    (async () => {
+      try {
+        const settings = await api.getSettings();
+        if (!active) return;
+        setDefaultVisibility(settings.default_prompt_visibility);
+        const prefs = user.preferences ?? settings.preferences;
+        setScope(prefs.default_scope);
+        setViewMode(prefs.default_view_mode);
+        saveViewMode(prefs.default_view_mode);
+      } catch {
+        /* preferences optional */
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
     loadPrompts();
   }, [scope, search, taskFilter]);
 
   function openCreate() {
     setEditing(null);
-    setForm(emptyForm);
+    setForm({ ...emptyForm, visibility: defaultVisibility });
     setNewModel("");
     setUseNewModel(false);
     setShowForm(true);
@@ -147,6 +168,16 @@ export default function DashboardPage() {
       await navigator.clipboard.writeText(prompt.content);
       setCopiedId(prompt.id);
       window.setTimeout(() => setCopiedId((current) => (current === prompt.id ? null : current)), 2000);
+      api
+        .registerCopy(prompt.id)
+        .then((res) =>
+          setPrompts((current) =>
+            current.map((p) => (p.id === prompt.id ? { ...p, copy_count: res.copy_count } : p)),
+          ),
+        )
+        .catch(() => {
+          /* Copy-Tracking ist best effort */
+        });
     } catch {
       setError("Kopieren in die Zwischenablage fehlgeschlagen");
     }
@@ -161,15 +192,7 @@ export default function DashboardPage() {
 
   return (
     <div className={`layout ${viewMode === "grid" ? "layout-wide" : ""}`}>
-      <header>
-        <BrandLogo size="md" subtitle={`Angemeldet als ${user?.username}`} />
-        <div className="header-actions">
-          <AppVersion />
-          <button className="secondary" onClick={logout}>
-            Abmelden
-          </button>
-        </div>
-      </header>
+      <AppHeader />
 
       <section className="search-panel card">
         <div className="search-panel-header">

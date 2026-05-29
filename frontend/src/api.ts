@@ -1,4 +1,15 @@
-import type { Meta, Prompt, PromptInput, User } from "./types";
+import type {
+  AppSettings,
+  Meta,
+  Prompt,
+  PromptInput,
+  PublicSettings,
+  Settings,
+  Stats,
+  User,
+  UserAdmin,
+  UserPreferences,
+} from "./types";
 import { getApiUrl } from "./config";
 
 type Tokens = { access_token: string; refresh_token: string };
@@ -126,6 +137,67 @@ export const api = {
 
   deletePrompt(id: string) {
     return request<void>(`/api/prompts/${id}`, { method: "DELETE" });
+  },
+
+  registerCopy(id: string) {
+    return request<{ id: string; copy_count: number }>(`/api/prompts/${id}/copy`, {
+      method: "POST",
+    });
+  },
+
+  stats() {
+    return request<Stats>("/api/stats");
+  },
+
+  publicSettings() {
+    return request<PublicSettings>("/api/settings/public");
+  },
+
+  getSettings() {
+    return request<Settings>("/api/settings");
+  },
+
+  updatePreferences(data: Partial<UserPreferences>) {
+    return request<UserPreferences>("/api/settings/preferences", {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  },
+
+  updateAppSettings(data: Partial<AppSettings>) {
+    return request<AppSettings>("/api/settings/app", {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  },
+
+  changePassword(currentPassword: string, newPassword: string) {
+    return request<User>("/api/settings/password", {
+      method: "POST",
+      body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+    });
+  },
+
+  listUsers() {
+    return request<UserAdmin[]>("/api/users");
+  },
+
+  updateUser(id: string, data: Partial<Pick<UserAdmin, "is_active" | "is_admin">>) {
+    return request<UserAdmin>(`/api/users/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  },
+
+  resetUserPassword(id: string, newPassword: string) {
+    return request<void>(`/api/users/${id}/password`, {
+      method: "POST",
+      body: JSON.stringify({ new_password: newPassword }),
+    });
+  },
+
+  deleteUser(id: string) {
+    return request<void>(`/api/users/${id}`, { method: "DELETE" });
   },
 };
 

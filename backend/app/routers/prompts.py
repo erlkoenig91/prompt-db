@@ -1,14 +1,14 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import or_, select
+from sqlalchemy import or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.database import get_db
 from app.deps import get_current_user, get_optional_user
 from app.models import Prompt, PromptVisibility, User
-from app.schemas import PromptCreate, PromptResponse, PromptUpdate
+from app.schemas import CopyResponse, PromptCreate, PromptResponse, PromptUpdate
 
 router = APIRouter(prefix="/prompts", tags=["prompts"])
 
@@ -25,6 +25,7 @@ def to_prompt_response(prompt: Prompt) -> PromptResponse:
         tags=prompt.tags,
         owner_id=prompt.owner_id,
         owner_username=prompt.owner.username if prompt.owner else None,
+        copy_count=prompt.copy_count,
         created_at=prompt.created_at,
         updated_at=prompt.updated_at,
     )
@@ -111,6 +112,31 @@ async def get_prompt(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt nicht gefunden")
 
     return to_prompt_response(prompt)
+
+
+@router.post("/{prompt_id}/copy", response_model=CopyResponse)
+async def register_copy(
+    prompt_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User | None = Depends(get_optional_user),
+) -> CopyResponse:
+    result = await db.execute(select(Prompt).where(Prompt.id == prompt_id))
+    prompt = result.scalar_one_or_none()
+    if not prompt:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt nicht gefunden")
+
+    is_owner = current_user and prompt.owner_id == current_user.id
+    if prompt.visibility != PromptVisibility.PUBLIC and not is_owner:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt nicht gefunden")
+
+    updated = await db.execute(
+        update(Prompt)
+        .where(Prompt.id == prompt_id)
+        .values(copy_count=Prompt.copy_count + 1, updated_at=Prompt.updated_at)
+        .returning(Prompt.copy_count)
+    )
+    new_count = updated.scalar_one()
+    return CopyResponse(id=prompt_id, copy_count=new_count)
 
 
 @router.patch("/{prompt_id}", response_model=PromptResponse)

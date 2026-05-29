@@ -1,9 +1,22 @@
-import { readFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-const appVersion = readFileSync(resolve(__dirname, "../VERSION"), "utf-8").trim();
+function readAppVersion(): string {
+  const candidates = [
+    resolve(__dirname, "VERSION"), // Docker: flach nach /app kopiert
+    resolve(__dirname, "../VERSION"), // Lokal: Repo-Root neben frontend/
+  ];
+  for (const path of candidates) {
+    if (existsSync(path)) {
+      return readFileSync(path, "utf-8").trim();
+    }
+  }
+  throw new Error(`VERSION file not found. Tried: ${candidates.join(", ")}`);
+}
+
+const appVersion = readAppVersion();
 
 export default defineConfig({
   plugins: [react()],

@@ -1,6 +1,6 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ApiError } from "../api";
+import { api, ApiError } from "../api";
 import { useAuth } from "../AuthContext";
 import BrandLogo from "../components/BrandLogo";
 import AppVersion from "../components/AppVersion";
@@ -11,6 +11,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [allowRegistration, setAllowRegistration] = useState(true);
+
+  useEffect(() => {
+    api.publicSettings().then((s) => setAllowRegistration(s.allow_registration)).catch(() => {
+      setAllowRegistration(true);
+    });
+  }, []);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -55,7 +62,13 @@ export default function LoginPage() {
           </button>
         </form>
         <p className="muted">
-          Noch kein Konto? <Link to="/register">Registrieren</Link>
+          {allowRegistration ? (
+            <>
+              Noch kein Konto? <Link to="/register">Registrieren</Link>
+            </>
+          ) : (
+            "Registrierung ist derzeit deaktiviert."
+          )}
         </p>
       </div>
       <AppVersion />
