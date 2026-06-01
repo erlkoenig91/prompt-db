@@ -25,12 +25,11 @@ RUN chmod +x /docker-entrypoint.sh
 
 COPY --from=build /app/dist /usr/share/nginx/html
 
-RUN addgroup -S app && adduser -S app -G app \
-    && mkdir -p /etc/nginx/ssl /etc/nginx/conf.d \
-    && chown -R app:app /usr/share/nginx/html /var/cache/nginx /var/log/nginx /etc/nginx/ssl /etc/nginx/conf.d /etc/nginx/templates \
-    && touch /var/run/nginx.pid && chown app:app /var/run/nginx.pid
+RUN mkdir -p /etc/nginx/ssl /etc/nginx/conf.d \
+    && chown -R nginx:nginx /usr/share/nginx/html /var/cache/nginx /var/log/nginx /etc/nginx/ssl /etc/nginx/conf.d /etc/nginx/templates \
+    && touch /var/run/nginx.pid && chown nginx:nginx /var/run/nginx.pid
 
-USER app
+USER nginx
 EXPOSE 8080 8443
 
 HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
