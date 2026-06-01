@@ -65,7 +65,7 @@ docker compose up --build
 
 ## Version
 
-Die aktuelle Version steht in [`VERSION`](VERSION) (aktuell **1.0.5**). Sie wird im Backend (`/health`, `/api/meta`), in der UI und in GitHub Releases verwendet.
+Die aktuelle Version steht in [`VERSION`](VERSION) (aktuell **1.0.6**). Sie wird im Backend (`/health`, `/api/meta`), in der UI und in GitHub Releases verwendet.
 
 Neue Version veröffentlichen:
 
