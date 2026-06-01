@@ -8,6 +8,32 @@ Persönliche Prompt-Datenbank mit Web-Oberfläche: Prompts mit Metadaten (Modell
 
 Repository: [github.com/erlkoenig91/prompt-db](https://github.com/erlkoenig91/prompt-db)
 
+## Screenshots
+
+### Prompt-Übersicht
+
+Suche, Filter und Listenansicht mit Kopieren-Button.
+
+![Prompt-Übersicht](docs/examples/overview.png)
+
+### Statistik
+
+Öffentliche Prompts: meist kopierte Einträge und neue Prompts im Zeitverlauf.
+
+![Statistik-Dashboard](docs/examples/statics.png)
+
+### Einstellungen
+
+Persönliche Präferenzen, Passwort ändern und globale Anwendungseinstellungen (Admin).
+
+![Einstellungen](docs/examples/settings.png)
+
+### Benutzerverwaltung
+
+Admin-Oberfläche zum Verwalten von Konten, Rollen und Status.
+
+![Benutzerverwaltung](docs/examples/usermanagement.png)
+
 **Social Preview:** Bild für Link-Vorschauen liegt unter [`.github/social-preview.png`](.github/social-preview.png) (1280×640). Einmalig unter *Settings → General → Social preview* hochladen.
 
 [![CI](https://github.com/erlkoenig91/prompt-db/actions/workflows/ci.yml/badge.svg)](https://github.com/erlkoenig91/prompt-db/actions/workflows/ci.yml)
@@ -39,7 +65,7 @@ docker compose up --build
 
 ## Version
 
-Die aktuelle Version steht in [`VERSION`](VERSION) (aktuell **1.0.0**). Sie wird im Backend (`/health`, `/api/meta`), in der UI und in GitHub Releases verwendet.
+Die aktuelle Version steht in [`VERSION`](VERSION) (aktuell **1.0.5**). Sie wird im Backend (`/health`, `/api/meta`), in der UI und in GitHub Releases verwendet.
 
 Neue Version veröffentlichen:
 
@@ -76,7 +102,10 @@ Details: [docs/ci-cd.md](docs/ci-cd.md)
 - Registrierung und Login mit JWT (Access + Refresh Token, Rotation)
 - Prompts: Titel, Text, Beschreibung, Modell, Aufgabe, Tags, privat/öffentlich
 - Suche mit Debounce, Aufgabenfilter, drei Ansichtsmodi (Liste, Kacheln, Kompakt)
-- Kopieren-Button pro Prompt
+- Kopieren-Button pro Prompt mit Nutzungsstatistik
+- Statistik-Dashboard für öffentliche Prompts
+- Einstellungen: persönliche Präferenzen und globale App-Konfiguration (Admin)
+- Benutzerverwaltung: Konten aktivieren/deaktivieren, Rollen, Passwort-Reset (Admin)
 - Rate Limiting auf Auth-Endpunkten
 - Security Headers, Passwort-Policy, bcrypt-Hashing
 - Health (`/health`) und Readiness (`/ready`) für Kubernetes
