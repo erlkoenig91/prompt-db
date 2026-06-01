@@ -4,24 +4,50 @@ set -euo pipefail
 # Registry-Pfad als erstes Argument, Tag als zweites.
 # Beispiel:
 #   ./scripts/build-images.sh ghcr.io/me 1.0.0
+#   PUSH=1 ./scripts/build-images.sh ghcr.io/me 1.0.0
 
 REGISTRY="${1:-ghcr.io/erlkoenig91}"
 TAG="${2:-latest}"
 VITE_API_URL="${VITE_API_URL:-https://api.example.com}"
+PLATFORMS="${PLATFORMS:-linux/amd64,linux/arm64}"
+PUSH="${PUSH:-0}"
 
 BACKEND_IMAGE="${REGISTRY}/prompt-db-backend:${TAG}"
 FRONTEND_IMAGE="${REGISTRY}/prompt-db-frontend:${TAG}"
 
-docker build -t "${BACKEND_IMAGE}" -f backend/Dockerfile .
-docker build -t "${FRONTEND_IMAGE}" \
+docker buildx inspect multiarch-builder >/dev/null 2>&1 \
+  || docker buildx create --name multiarch-builder --use
+docker buildx use multiarch-builder
+
+push_args=()
+if [ "${PUSH}" = "1" ]; then
+  push_args=(--push)
+else
+  push_args=(--load)
+  echo "Hinweis: --load unterstützt nur eine Plattform. Setze PUSH=1 für Multi-Arch-Push."
+  PLATFORMS="linux/$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')"
+fi
+
+docker buildx build \
+  --platform "${PLATFORMS}" \
+  -t "${BACKEND_IMAGE}" \
+  -f backend/Dockerfile \
+  "${push_args[@]}" \
+  .
+
+docker buildx build \
+  --platform "${PLATFORMS}" \
+  -t "${FRONTEND_IMAGE}" \
   --build-arg "VITE_API_URL=${VITE_API_URL}" \
-  -f frontend/Dockerfile .
+  -f frontend/Dockerfile \
+  "${push_args[@]}" \
+  .
 
 echo "Built:"
 echo "  ${BACKEND_IMAGE}"
 echo "  ${FRONTEND_IMAGE}"
-echo ""
-echo "Push with:"
-echo "  docker login ${REGISTRY%%/*}"
-echo "  docker push ${BACKEND_IMAGE}"
-echo "  docker push ${FRONTEND_IMAGE}"
+if [ "${PUSH}" != "1" ]; then
+  echo ""
+  echo "Multi-Arch Push:"
+  echo "  PUSH=1 ./scripts/build-images.sh ${REGISTRY} ${TAG}"
+fi

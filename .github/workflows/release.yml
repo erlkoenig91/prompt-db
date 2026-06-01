@@ -42,6 +42,7 @@ jobs:
         with:
           context: .
           file: backend/Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/prompt-db-backend:${{ steps.version.outputs.app_version }}
@@ -53,6 +54,7 @@ jobs:
         with:
           context: .
           file: frontend/Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: true
           build-args: |
             VITE_API_URL=${{ vars.VITE_API_URL }}
