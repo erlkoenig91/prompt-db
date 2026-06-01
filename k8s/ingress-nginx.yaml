@@ -1,12 +1,19 @@
-# Rancher Desktop / k3s nutzt Traefik als Ingress-Controller.
-# Für nginx Ingress + cert-manager siehe k8s/ingress-nginx.yaml
+# Produktion: nginx Ingress Controller + cert-manager (Let's Encrypt)
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: prompt-db
   namespace: prompt-db
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "2m"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
-  ingressClassName: traefik
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - prompt-db.example.com
+        - api.prompt-db.example.com
+      secretName: prompt-db-tls
   rules:
     - host: prompt-db.example.com
       http:

@@ -19,8 +19,8 @@ spec:
         fsGroup: 101
       containers:
         - name: frontend
-          image: ghcr.io/erlkoenig91/prompt-db-frontend:1.0.3
-          imagePullPolicy: IfNotPresent
+          image: ghcr.io/erlkoenig91/prompt-db-frontend:1.0.5
+          imagePullPolicy: Always
           envFrom:
             - configMapRef:
                 name: prompt-db-config
@@ -31,7 +31,7 @@ spec:
                   name: prompt-db-config
                   key: VITE_API_URL
             - name: API_UPSTREAM
-              value: "http://prompt-db-backend:8000"
+              value: "http://prompt-db-backend.prompt-db.svc.cluster.local:8000"
           ports:
             - containerPort: 8080
           readinessProbe:
