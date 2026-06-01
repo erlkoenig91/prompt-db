@@ -2,21 +2,13 @@ import { FormEvent, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { api, ApiError } from "../api";
 import { useAuth } from "../AuthContext";
+import { useLocale } from "../LocaleContext";
 import AppHeader from "../components/AppHeader";
 import type { UserAdmin } from "../types";
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 export default function UsersPage() {
   const { user } = useAuth();
+  const { t, translateApiError, formatDateTime } = useLocale();
   const [users, setUsers] = useState<UserAdmin[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -31,7 +23,8 @@ export default function UsersPage() {
     try {
       setUsers(await api.listUsers());
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Benutzer konnten nicht geladen werden");
+      const message = err instanceof ApiError ? err.message : t("users.loadFailed");
+      setError(err instanceof ApiError ? translateApiError(message) : message);
     } finally {
       setLoading(false);
     }
@@ -53,7 +46,8 @@ export default function UsersPage() {
       const updated = await api.updateUser(target.id, { is_active: !target.is_active });
       setUsers((current) => current.map((u) => (u.id === updated.id ? updated : u)));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Aktualisierung fehlgeschlagen");
+      const message = err instanceof ApiError ? err.message : t("common.updateFailed");
+      setError(err instanceof ApiError ? translateApiError(message) : message);
     }
   }
 
@@ -63,12 +57,13 @@ export default function UsersPage() {
       const updated = await api.updateUser(target.id, { is_admin: !target.is_admin });
       setUsers((current) => current.map((u) => (u.id === updated.id ? updated : u)));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Aktualisierung fehlgeschlagen");
+      const message = err instanceof ApiError ? err.message : t("common.updateFailed");
+      setError(err instanceof ApiError ? translateApiError(message) : message);
     }
   }
 
   async function handleDelete(target: UserAdmin) {
-    if (!confirm(`Benutzer „${target.username}" wirklich löschen? Alle Prompts werden mitgelöscht.`)) {
+    if (!confirm(t("users.deleteConfirm", { username: target.username }))) {
       return;
     }
     setError("");
@@ -76,7 +71,8 @@ export default function UsersPage() {
       await api.deleteUser(target.id);
       setUsers((current) => current.filter((u) => u.id !== target.id));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Löschen fehlgeschlagen");
+      const message = err instanceof ApiError ? err.message : t("common.deleteFailed");
+      setError(err instanceof ApiError ? translateApiError(message) : message);
     }
   }
 
@@ -84,7 +80,7 @@ export default function UsersPage() {
     e.preventDefault();
     if (!resetUserId) return;
     if (resetPassword !== resetConfirm) {
-      setError("Die Passwörter stimmen nicht überein.");
+      setError(t("users.passwordMismatch"));
       return;
     }
     setSavingReset(true);
@@ -95,31 +91,34 @@ export default function UsersPage() {
       setResetPassword("");
       setResetConfirm("");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Passwort konnte nicht gesetzt werden");
+      const message = err instanceof ApiError ? err.message : t("users.passwordSetFailed");
+      setError(err instanceof ApiError ? translateApiError(message) : message);
     } finally {
       setSavingReset(false);
     }
   }
 
+  const resetUsername = users.find((u) => u.id === resetUserId)?.username ?? "";
+
   return (
     <div className="layout">
-      <AppHeader subtitle="Benutzerverwaltung" />
+      <AppHeader subtitle={t("users.subtitle")} />
 
       {error && <div className="error">{error}</div>}
 
       {loading ? (
-        <p className="muted">Lade Benutzer…</p>
+        <p className="muted">{t("users.loading")}</p>
       ) : (
         <section className="card users-table-wrap">
           <table className="users-table">
             <thead>
               <tr>
-                <th>Benutzername</th>
-                <th>Status</th>
-                <th>Rolle</th>
-                <th>Prompts</th>
-                <th>Erstellt</th>
-                <th>Aktionen</th>
+                <th>{t("users.username")}</th>
+                <th>{t("users.status")}</th>
+                <th>{t("users.role")}</th>
+                <th>{t("users.prompts")}</th>
+                <th>{t("users.created")}</th>
+                <th>{t("users.actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -129,20 +128,20 @@ export default function UsersPage() {
                   <tr key={entry.id}>
                     <td>
                       {entry.username}
-                      {isSelf && <span className="badge self-badge">Du</span>}
+                      {isSelf && <span className="badge self-badge">{t("common.you")}</span>}
                     </td>
                     <td>
                       <span className={`badge ${entry.is_active ? "public" : ""}`}>
-                        {entry.is_active ? "Aktiv" : "Inaktiv"}
+                        {entry.is_active ? t("common.active") : t("common.inactive")}
                       </span>
                     </td>
                     <td>
                       <span className={`badge ${entry.is_admin ? "admin" : ""}`}>
-                        {entry.is_admin ? "Admin" : "Benutzer"}
+                        {entry.is_admin ? t("common.admin") : t("common.user")}
                       </span>
                     </td>
                     <td>{entry.prompt_count}</td>
-                    <td>{formatDate(entry.created_at)}</td>
+                    <td>{formatDateTime(entry.created_at)}</td>
                     <td>
                       <div className="user-actions">
                         <button
@@ -151,7 +150,7 @@ export default function UsersPage() {
                           disabled={isSelf}
                           onClick={() => toggleActive(entry)}
                         >
-                          {entry.is_active ? "Deaktivieren" : "Aktivieren"}
+                          {entry.is_active ? t("users.deactivate") : t("users.activate")}
                         </button>
                         <button
                           type="button"
@@ -159,7 +158,7 @@ export default function UsersPage() {
                           disabled={isSelf}
                           onClick={() => toggleAdmin(entry)}
                         >
-                          {entry.is_admin ? "Admin entziehen" : "Zum Admin machen"}
+                          {entry.is_admin ? t("users.revokeAdmin") : t("users.makeAdmin")}
                         </button>
                         <button
                           type="button"
@@ -170,7 +169,7 @@ export default function UsersPage() {
                             setResetConfirm("");
                           }}
                         >
-                          Passwort
+                          {t("users.password")}
                         </button>
                         <button
                           type="button"
@@ -178,7 +177,7 @@ export default function UsersPage() {
                           disabled={isSelf}
                           onClick={() => handleDelete(entry)}
                         >
-                          Löschen
+                          {t("common.delete")}
                         </button>
                       </div>
                     </td>
@@ -193,12 +192,10 @@ export default function UsersPage() {
       {resetUserId && (
         <div className="modal-backdrop" onClick={() => setResetUserId(null)}>
           <div className="modal card" onClick={(e) => e.stopPropagation()}>
-            <h2>Passwort zurücksetzen</h2>
-            <p className="muted">
-              Neues Passwort für {users.find((u) => u.id === resetUserId)?.username}
-            </p>
+            <h2>{t("users.resetPassword")}</h2>
+            <p className="muted">{t("users.resetPasswordFor", { username: resetUsername })}</p>
             <form onSubmit={handleResetSubmit}>
-              <label htmlFor="reset-password">Neues Passwort</label>
+              <label htmlFor="reset-password">{t("settings.newPassword")}</label>
               <input
                 id="reset-password"
                 type="password"
@@ -207,7 +204,7 @@ export default function UsersPage() {
                 minLength={12}
                 required
               />
-              <label htmlFor="reset-confirm">Passwort bestätigen</label>
+              <label htmlFor="reset-confirm">{t("users.confirmPassword")}</label>
               <input
                 id="reset-confirm"
                 type="password"
@@ -218,10 +215,10 @@ export default function UsersPage() {
               />
               <div className="toolbar">
                 <button type="submit" disabled={savingReset}>
-                  {savingReset ? "Speichern…" : "Passwort setzen"}
+                  {savingReset ? t("common.saving") : t("users.setPassword")}
                 </button>
                 <button type="button" className="secondary" onClick={() => setResetUserId(null)}>
-                  Abbrechen
+                  {t("common.cancel")}
                 </button>
               </div>
             </form>

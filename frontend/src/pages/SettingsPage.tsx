@@ -1,18 +1,16 @@
 import { FormEvent, useEffect, useState } from "react";
 import { api, ApiError } from "../api";
 import { useAuth } from "../AuthContext";
+import { useLocale } from "../LocaleContext";
 import AppHeader from "../components/AppHeader";
 import type { AppSettings, UserPreferences } from "../types";
-import { VIEW_MODES, saveViewMode, type ViewMode } from "../viewMode";
-
-const SCOPES = [
-  { value: "all", label: "Alle sichtbaren" },
-  { value: "mine", label: "Meine" },
-  { value: "public", label: "Öffentliche" },
-] as const;
+import { saveViewMode, useScopes, useViewModes, type ViewMode } from "../viewMode";
 
 export default function SettingsPage() {
   const { user, refreshUser } = useAuth();
+  const { t, translateApiError } = useLocale();
+  const viewModes = useViewModes();
+  const scopes = useScopes();
   const [preferences, setPreferences] = useState<UserPreferences>({
     default_view_mode: "list",
     default_scope: "all",
@@ -40,7 +38,8 @@ export default function SettingsPage() {
         setAppSettings(data.app);
       } catch (err) {
         if (!active) return;
-        setError(err instanceof ApiError ? err.message : "Einstellungen konnten nicht geladen werden");
+        const message = err instanceof ApiError ? err.message : t("settings.loadFailed");
+        setError(err instanceof ApiError ? translateApiError(message) : message);
       } finally {
         if (active) setLoading(false);
       }
@@ -48,7 +47,7 @@ export default function SettingsPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [t, translateApiError]);
 
   async function handlePreferencesSubmit(e: FormEvent) {
     e.preventDefault();
@@ -60,9 +59,10 @@ export default function SettingsPage() {
       setPreferences(updated);
       saveViewMode(updated.default_view_mode as ViewMode);
       await refreshUser();
-      setSuccess("Persönliche Einstellungen gespeichert.");
+      setSuccess(t("settings.savedPrefs"));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Speichern fehlgeschlagen");
+      const message = err instanceof ApiError ? err.message : t("common.saveFailed");
+      setError(err instanceof ApiError ? translateApiError(message) : message);
     } finally {
       setSavingPrefs(false);
     }
@@ -77,9 +77,10 @@ export default function SettingsPage() {
     try {
       const updated = await api.updateAppSettings(appSettings);
       setAppSettings(updated);
-      setSuccess("Anwendungseinstellungen gespeichert.");
+      setSuccess(t("settings.appSaved"));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Speichern fehlgeschlagen");
+      const message = err instanceof ApiError ? err.message : t("common.saveFailed");
+      setError(err instanceof ApiError ? translateApiError(message) : message);
     } finally {
       setSavingApp(false);
     }
@@ -88,7 +89,7 @@ export default function SettingsPage() {
   async function handlePasswordSubmit(e: FormEvent) {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      setError("Die neuen Passwörter stimmen nicht überein.");
+      setError(t("settings.passwordMismatch"));
       return;
     }
     setSavingPassword(true);
@@ -99,9 +100,10 @@ export default function SettingsPage() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      setSuccess("Passwort geändert.");
+      setSuccess(t("settings.passwordChanged"));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Passwortänderung fehlgeschlagen");
+      const message = err instanceof ApiError ? err.message : t("settings.passwordChangeFailed");
+      setError(err instanceof ApiError ? translateApiError(message) : message);
     } finally {
       setSavingPassword(false);
     }
@@ -109,20 +111,20 @@ export default function SettingsPage() {
 
   return (
     <div className="layout">
-      <AppHeader subtitle="Einstellungen" />
+      <AppHeader subtitle={t("settings.subtitle")} />
 
       {error && <div className="error">{error}</div>}
       {success && <div className="success">{success}</div>}
 
       {loading ? (
-        <p className="muted">Lade Einstellungen…</p>
+        <p className="muted">{t("settings.loading")}</p>
       ) : (
         <div className="settings-grid">
           <section className="card settings-section">
-            <h2>Meine Einstellungen</h2>
-            <p className="muted">Diese Einstellungen gelten nur für dein Konto.</p>
+            <h2>{t("settings.mySettings")}</h2>
+            <p className="muted">{t("settings.mySettingsHint")}</p>
             <form onSubmit={handlePreferencesSubmit}>
-              <label htmlFor="default-view-mode">Standard-Ansicht</label>
+              <label htmlFor="default-view-mode">{t("settings.defaultView")}</label>
               <select
                 id="default-view-mode"
                 value={preferences.default_view_mode}
@@ -130,14 +132,14 @@ export default function SettingsPage() {
                   setPreferences({ ...preferences, default_view_mode: e.target.value as ViewMode })
                 }
               >
-                {VIEW_MODES.map((mode) => (
+                {viewModes.map((mode) => (
                   <option key={mode.id} value={mode.id}>
                     {mode.label} – {mode.hint}
                   </option>
                 ))}
               </select>
 
-              <label htmlFor="default-scope">Standard-Bereich</label>
+              <label htmlFor="default-scope">{t("settings.defaultScope")}</label>
               <select
                 id="default-scope"
                 value={preferences.default_scope}
@@ -148,7 +150,7 @@ export default function SettingsPage() {
                   })
                 }
               >
-                {SCOPES.map((scope) => (
+                {scopes.map((scope) => (
                   <option key={scope.value} value={scope.value}>
                     {scope.label}
                   </option>
@@ -156,15 +158,15 @@ export default function SettingsPage() {
               </select>
 
               <button type="submit" disabled={savingPrefs}>
-                {savingPrefs ? "Speichern…" : "Speichern"}
+                {savingPrefs ? t("common.saving") : t("common.save")}
               </button>
             </form>
           </section>
 
           <section className="card settings-section">
-            <h2>Passwort ändern</h2>
+            <h2>{t("settings.changePassword")}</h2>
             <form onSubmit={handlePasswordSubmit}>
-              <label htmlFor="current-password">Aktuelles Passwort</label>
+              <label htmlFor="current-password">{t("settings.currentPassword")}</label>
               <input
                 id="current-password"
                 type="password"
@@ -173,7 +175,7 @@ export default function SettingsPage() {
                 autoComplete="current-password"
                 required
               />
-              <label htmlFor="new-password">Neues Passwort</label>
+              <label htmlFor="new-password">{t("settings.newPassword")}</label>
               <input
                 id="new-password"
                 type="password"
@@ -183,7 +185,7 @@ export default function SettingsPage() {
                 minLength={12}
                 required
               />
-              <label htmlFor="confirm-password">Neues Passwort bestätigen</label>
+              <label htmlFor="confirm-password">{t("settings.confirmPassword")}</label>
               <input
                 id="confirm-password"
                 type="password"
@@ -194,15 +196,15 @@ export default function SettingsPage() {
                 required
               />
               <button type="submit" disabled={savingPassword}>
-                {savingPassword ? "Speichern…" : "Passwort ändern"}
+                {savingPassword ? t("common.saving") : t("settings.changePassword")}
               </button>
             </form>
           </section>
 
           {user?.is_admin && appSettings && (
             <section className="card settings-section settings-section-wide">
-              <h2>Anwendung</h2>
-              <p className="muted">Diese Einstellungen gelten für alle Benutzer.</p>
+              <h2>{t("settings.application")}</h2>
+              <p className="muted">{t("settings.applicationHint")}</p>
               <form onSubmit={handleAppSubmit}>
                 <label className="checkbox-row">
                   <input
@@ -212,10 +214,10 @@ export default function SettingsPage() {
                       setAppSettings({ ...appSettings, allow_registration: e.target.checked })
                     }
                   />
-                  <span>Registrierung neuer Benutzer erlauben</span>
+                  <span>{t("settings.allowRegistration")}</span>
                 </label>
 
-                <label htmlFor="default-visibility">Standard-Sichtbarkeit neuer Prompts</label>
+                <label htmlFor="default-visibility">{t("settings.defaultVisibility")}</label>
                 <select
                   id="default-visibility"
                   value={appSettings.default_prompt_visibility}
@@ -226,14 +228,16 @@ export default function SettingsPage() {
                     })
                   }
                 >
-                  <option value="private">Privat</option>
-                  <option value="public">Öffentlich</option>
+                  <option value="private">{t("common.private")}</option>
+                  <option value="public">{t("common.public")}</option>
                 </select>
 
-                <p className="muted hint">Umgebung: {appSettings.environment}</p>
+                <p className="muted hint">
+                  {t("common.environment")}: {appSettings.environment}
+                </p>
 
                 <button type="submit" disabled={savingApp}>
-                  {savingApp ? "Speichern…" : "Anwendungseinstellungen speichern"}
+                  {savingApp ? t("common.saving") : t("settings.saveApp")}
                 </button>
               </form>
             </section>

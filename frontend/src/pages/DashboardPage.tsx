@@ -1,11 +1,12 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { api, ApiError } from "../api";
 import { useAuth } from "../AuthContext";
+import { useLocale } from "../LocaleContext";
 import PromptCard from "../components/PromptCard";
 import ViewModeSwitch from "../components/ViewModeSwitch";
 import AppHeader from "../components/AppHeader";
 import type { Meta, Prompt, PromptInput } from "../types";
-import { loadViewMode, saveViewMode, type ViewMode } from "../viewMode";
+import { loadViewMode, saveViewMode, useScopes, type ViewMode } from "../viewMode";
 
 const emptyForm: PromptInput = {
   title: "",
@@ -17,12 +18,10 @@ const emptyForm: PromptInput = {
   tags: "",
 };
 
-function taskLabel(meta: Meta | null, task: string) {
-  return meta?.tasks.find((t) => t.value === task)?.label ?? task;
-}
-
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { t, translateApiError, taskLabel: translateTask } = useLocale();
+  const scopes = useScopes();
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [meta, setMeta] = useState<Meta | null>(null);
   const [defaultVisibility, setDefaultVisibility] = useState<"private" | "public">("private");
@@ -42,6 +41,11 @@ export default function DashboardPage() {
 
   const modelOptions = useMemo(() => meta?.models ?? [], [meta]);
 
+  const resolveTaskLabel = useCallback(
+    (task: string) => translateTask(task),
+    [translateTask],
+  );
+
   useEffect(() => {
     const timer = window.setTimeout(() => setSearch(searchInput.trim()), 300);
     return () => window.clearTimeout(timer);
@@ -53,7 +57,8 @@ export default function DashboardPage() {
     try {
       setPrompts(await api.listPrompts(scope, search || undefined, taskFilter || undefined));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Laden fehlgeschlagen");
+      const message = err instanceof ApiError ? err.message : t("common.loadFailed");
+      setError(err instanceof ApiError ? translateApiError(message) : message);
     } finally {
       setLoading(false);
     }
@@ -130,7 +135,7 @@ export default function DashboardPage() {
     setError("");
     const model = resolvedModel();
     if (!model) {
-      setError("Bitte ein Modell auswählen oder einen Namen eingeben.");
+      setError(t("dashboard.modelRequired"));
       return;
     }
     const payload: PromptInput = {
@@ -149,17 +154,19 @@ export default function DashboardPage() {
       await refreshMeta();
       await loadPrompts();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Speichern fehlgeschlagen");
+      const message = err instanceof ApiError ? err.message : t("common.saveFailed");
+      setError(err instanceof ApiError ? translateApiError(message) : message);
     }
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Prompt wirklich löschen?")) return;
+    if (!confirm(t("dashboard.deleteConfirm"))) return;
     try {
       await api.deletePrompt(id);
       await loadPrompts();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Löschen fehlgeschlagen");
+      const message = err instanceof ApiError ? err.message : t("common.deleteFailed");
+      setError(err instanceof ApiError ? translateApiError(message) : message);
     }
   }
 
@@ -179,7 +186,7 @@ export default function DashboardPage() {
           /* Copy-Tracking ist best effort */
         });
     } catch {
-      setError("Kopieren in die Zwischenablage fehlgeschlagen");
+      setError(t("dashboard.copyFailed"));
     }
   }
 
@@ -190,47 +197,52 @@ export default function DashboardPage() {
     saveViewMode(mode);
   }
 
+  const hitsLabel =
+    prompts.length === 1 ? t("common.hitsOne") : t("common.hitsMany");
+
   return (
     <div className={`layout ${viewMode === "grid" ? "layout-wide" : ""}`}>
       <AppHeader />
 
       <section className="search-panel card">
         <div className="search-panel-header">
-          <h2>Suche</h2>
+          <h2>{t("dashboard.search")}</h2>
           {!loading && (
             <span className="muted">
-              {prompts.length} {prompts.length === 1 ? "Treffer" : "Treffer"}
+              {prompts.length} {hitsLabel}
             </span>
           )}
         </div>
         <div className="search-fields">
           <div className="search-input-wrap">
-            <label htmlFor="search">Textsuche</label>
+            <label htmlFor="search">{t("dashboard.textSearch")}</label>
             <input
               id="search"
               type="search"
-              placeholder="Titel, Inhalt, Tags, Modell…"
+              placeholder={t("dashboard.searchPlaceholder")}
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
             />
           </div>
           <div>
-            <label htmlFor="task-filter">Aufgabe</label>
+            <label htmlFor="task-filter">{t("dashboard.task")}</label>
             <select id="task-filter" value={taskFilter} onChange={(e) => setTaskFilter(e.target.value)}>
-              <option value="">Alle Aufgaben</option>
-              {(meta?.tasks ?? []).map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
+              <option value="">{t("dashboard.allTasks")}</option>
+              {(meta?.tasks ?? []).map((taskOption) => (
+                <option key={taskOption.value} value={taskOption.value}>
+                  {resolveTaskLabel(taskOption.value)}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label htmlFor="scope">Bereich</label>
+            <label htmlFor="scope">{t("dashboard.scope")}</label>
             <select id="scope" value={scope} onChange={(e) => setScope(e.target.value as typeof scope)}>
-              <option value="all">Alle sichtbaren</option>
-              <option value="mine">Meine</option>
-              <option value="public">Öffentliche</option>
+              {scopes.map((scopeOption) => (
+                <option key={scopeOption.value} value={scopeOption.value}>
+                  {scopeOption.label}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -243,23 +255,23 @@ export default function DashboardPage() {
               setTaskFilter("");
             }}
           >
-            Filter zurücksetzen
+            {t("dashboard.resetFilters")}
           </button>
         )}
       </section>
 
       <div className="toolbar toolbar-main">
-        <button onClick={openCreate}>Neuer Prompt</button>
+        <button onClick={openCreate}>{t("dashboard.newPrompt")}</button>
         <ViewModeSwitch value={viewMode} onChange={handleViewModeChange} />
       </div>
 
       {error && <div className="error">{error}</div>}
 
       {loading ? (
-        <p className="muted">Lade Prompts…</p>
+        <p className="muted">{t("dashboard.loadingPrompts")}</p>
       ) : prompts.length === 0 ? (
         <p className="muted">
-          {hasActiveFilters ? "Keine Prompts zu deiner Suche gefunden." : "Keine Prompts gefunden."}
+          {hasActiveFilters ? t("dashboard.noSearchResults") : t("dashboard.noPrompts")}
         </p>
       ) : (
         <div className={`prompt-collection prompt-collection--${viewMode}`}>
@@ -275,7 +287,7 @@ export default function DashboardPage() {
                 onCopy={() => copyPrompt(prompt)}
                 onEdit={() => openEdit(prompt)}
                 onDelete={() => handleDelete(prompt.id)}
-                taskLabel={(task) => taskLabel(meta, task)}
+                taskLabel={resolveTaskLabel}
               />
             );
           })}
@@ -285,23 +297,23 @@ export default function DashboardPage() {
       {showForm && (
         <div className="modal-backdrop" onClick={() => setShowForm(false)}>
           <div className="modal card" onClick={(e) => e.stopPropagation()}>
-            <h2>{editing ? "Prompt bearbeiten" : "Neuer Prompt"}</h2>
+            <h2>{editing ? t("dashboard.editPrompt") : t("dashboard.newPrompt")}</h2>
             <form onSubmit={handleSubmit}>
-              <label htmlFor="title">Titel</label>
+              <label htmlFor="title">{t("dashboard.title")}</label>
               <input
                 id="title"
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
                 required
               />
-              <label htmlFor="content">Prompt-Text</label>
+              <label htmlFor="content">{t("dashboard.promptText")}</label>
               <textarea
                 id="content"
                 value={form.content}
                 onChange={(e) => setForm({ ...form, content: e.target.value })}
                 required
               />
-              <label htmlFor="description">Beschreibung</label>
+              <label htmlFor="description">{t("dashboard.description")}</label>
               <textarea
                 id="description"
                 value={form.description}
@@ -309,7 +321,7 @@ export default function DashboardPage() {
               />
               <div className="grid-2">
                 <div>
-                  <label htmlFor="model-mode">Modell</label>
+                  <label htmlFor="model-mode">{t("dashboard.model")}</label>
                   <select
                     id="model-mode"
                     value={useNewModel ? "__new__" : form.model}
@@ -328,19 +340,19 @@ export default function DashboardPage() {
                         {m}
                       </option>
                     ))}
-                    <option value="__new__">+ Neues Modell…</option>
+                    <option value="__new__">{t("dashboard.newModel")}</option>
                   </select>
                   {useNewModel && (
                     <>
                       <label htmlFor="new-model" className="inline-label">
-                        Modellname
+                        {t("dashboard.modelName")}
                       </label>
                       <input
                         id="new-model"
                         list="model-suggestions"
                         value={newModel}
                         onChange={(e) => setNewModel(e.target.value)}
-                        placeholder="z. B. mistral-large"
+                        placeholder={t("dashboard.modelPlaceholder")}
                         required
                       />
                       <datalist id="model-suggestions">
@@ -348,20 +360,20 @@ export default function DashboardPage() {
                           <option key={m} value={m} />
                         ))}
                       </datalist>
-                      <p className="muted hint">Neue Modelle stehen danach für alle zur Auswahl.</p>
+                      <p className="muted hint">{t("dashboard.modelHint")}</p>
                     </>
                   )}
                 </div>
                 <div>
-                  <label htmlFor="task">Aufgabe</label>
+                  <label htmlFor="task">{t("dashboard.task")}</label>
                   <select
                     id="task"
                     value={form.task}
                     onChange={(e) => setForm({ ...form, task: e.target.value })}
                   >
-                    {(meta?.tasks ?? [{ value: form.task, label: form.task }]).map((t) => (
-                      <option key={t.value} value={t.value}>
-                        {t.label}
+                    {(meta?.tasks ?? [{ value: form.task, label: form.task }]).map((taskOption) => (
+                      <option key={taskOption.value} value={taskOption.value}>
+                        {resolveTaskLabel(taskOption.value)}
                       </option>
                     ))}
                   </select>
@@ -369,7 +381,7 @@ export default function DashboardPage() {
               </div>
               <div className="grid-2">
                 <div>
-                  <label htmlFor="visibility">Sichtbarkeit</label>
+                  <label htmlFor="visibility">{t("dashboard.visibility")}</label>
                   <select
                     id="visibility"
                     value={form.visibility}
@@ -377,19 +389,19 @@ export default function DashboardPage() {
                       setForm({ ...form, visibility: e.target.value as "private" | "public" })
                     }
                   >
-                    <option value="private">Privat</option>
-                    <option value="public">Öffentlich</option>
+                    <option value="private">{t("common.private")}</option>
+                    <option value="public">{t("common.public")}</option>
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="tags">Tags (kommagetrennt)</label>
+                  <label htmlFor="tags">{t("dashboard.tags")}</label>
                   <input id="tags" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} />
                 </div>
               </div>
               <div className="toolbar">
-                <button type="submit">{editing ? "Speichern" : "Erstellen"}</button>
+                <button type="submit">{editing ? t("common.save") : t("common.create")}</button>
                 <button type="button" className="secondary" onClick={() => setShowForm(false)}>
-                  Abbrechen
+                  {t("common.cancel")}
                 </button>
               </div>
             </form>

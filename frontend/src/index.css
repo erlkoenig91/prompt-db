@@ -96,6 +96,49 @@ header h1 {
   gap: 0.75rem;
 }
 
+.lang-switch {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.lang-switch-btn {
+  padding: 0.35rem 0.6rem;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lang-switch-btn + .lang-switch-btn {
+  border-left: 1px solid var(--border);
+}
+
+.lang-switch-btn.active {
+  background: rgba(79, 140, 255, 0.15);
+  color: var(--accent);
+}
+
+.lang-switch-btn:hover:not(.active) {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.auth-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.auth-card-top h2 {
+  margin: 0;
+}
+
 .app-version {
   font-size: 0.75rem;
   color: var(--muted, #888);

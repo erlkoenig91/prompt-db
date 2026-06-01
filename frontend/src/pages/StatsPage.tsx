@@ -1,23 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, ApiError } from "../api";
+import { useLocale } from "../LocaleContext";
 import AppHeader from "../components/AppHeader";
-import type { Meta, Stats } from "../types";
-
-function taskLabel(meta: Meta | null, task: string) {
-  return meta?.tasks.find((t) => t.value === task)?.label ?? task;
-}
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
-}
-
-function formatDay(iso: string) {
-  return new Date(iso).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" });
-}
+import type { Stats } from "../types";
 
 export default function StatsPage() {
+  const { t, translateApiError, taskLabel, formatDate, formatDay } = useLocale();
   const [stats, setStats] = useState<Stats | null>(null);
-  const [meta, setMeta] = useState<Meta | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -27,13 +16,13 @@ export default function StatsPage() {
       setLoading(true);
       setError("");
       try {
-        const [statsData, metaData] = await Promise.all([api.stats(), api.meta().catch(() => null)]);
+        const statsData = await api.stats();
         if (!active) return;
         setStats(statsData);
-        setMeta(metaData);
       } catch (err) {
         if (!active) return;
-        setError(err instanceof ApiError ? err.message : "Statistik konnte nicht geladen werden");
+        const message = err instanceof ApiError ? err.message : t("stats.loadFailed");
+        setError(err instanceof ApiError ? translateApiError(message) : message);
       } finally {
         if (active) setLoading(false);
       }
@@ -41,7 +30,7 @@ export default function StatsPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [t, translateApiError]);
 
   const maxDayCount = useMemo(
     () => Math.max(1, ...(stats?.new_prompts_by_day.map((p) => p.count) ?? [0])),
@@ -54,39 +43,39 @@ export default function StatsPage() {
 
   return (
     <div className="layout">
-      <AppHeader subtitle="Statistik öffentlicher Prompts" />
+      <AppHeader subtitle={t("stats.subtitle")} />
 
       {error && <div className="error">{error}</div>}
 
       {loading ? (
-        <p className="muted">Lade Statistik…</p>
+        <p className="muted">{t("stats.loading")}</p>
       ) : !stats ? (
-        <p className="muted">Keine Daten verfügbar.</p>
+        <p className="muted">{t("common.noData")}</p>
       ) : (
         <>
           <section className="stat-kpis">
             <div className="card stat-kpi">
               <span className="stat-kpi-value">{stats.total_public_prompts}</span>
-              <span className="stat-kpi-label">Öffentliche Prompts</span>
+              <span className="stat-kpi-label">{t("stats.publicPrompts")}</span>
             </div>
             <div className="card stat-kpi">
               <span className="stat-kpi-value">{stats.total_copies}</span>
-              <span className="stat-kpi-label">Kopiervorgänge gesamt</span>
+              <span className="stat-kpi-label">{t("stats.totalCopies")}</span>
             </div>
             <div className="card stat-kpi">
               <span className="stat-kpi-value">{stats.new_last_7_days}</span>
-              <span className="stat-kpi-label">Neu (7 Tage)</span>
+              <span className="stat-kpi-label">{t("stats.new7Days")}</span>
             </div>
             <div className="card stat-kpi">
               <span className="stat-kpi-value">{stats.new_last_30_days}</span>
-              <span className="stat-kpi-label">Neu (30 Tage)</span>
+              <span className="stat-kpi-label">{t("stats.new30Days")}</span>
             </div>
           </section>
 
           <section className="card stat-section">
-            <h2>Meist kopierte öffentliche Prompts</h2>
+            <h2>{t("stats.mostCopied")}</h2>
             {stats.most_copied.length === 0 ? (
-              <p className="muted">Noch keine Kopiervorgänge erfasst.</p>
+              <p className="muted">{t("stats.noCopies")}</p>
             ) : (
               <ol className="stat-rank">
                 {stats.most_copied.map((p, index) => (
@@ -105,9 +94,11 @@ export default function StatsPage() {
                       </div>
                       <div className="meta-row">
                         <span className="badge">{p.model}</span>
-                        <span className="badge">{taskLabel(meta, p.task)}</span>
+                        <span className="badge">{taskLabel(p.task)}</span>
                         {p.owner_username && <span className="badge">@{p.owner_username}</span>}
-                        <span className="badge">seit {formatDate(p.created_at)}</span>
+                        <span className="badge">
+                          {t("common.since")} {formatDate(p.created_at)}
+                        </span>
                       </div>
                     </div>
                   </li>
@@ -117,10 +108,14 @@ export default function StatsPage() {
           </section>
 
           <section className="card stat-section">
-            <h2>Neue öffentliche Prompts (letzte 30 Tage)</h2>
-            <div className="stat-chart" role="img" aria-label="Neue öffentliche Prompts pro Tag">
+            <h2>{t("stats.newByDay")}</h2>
+            <div className="stat-chart" role="img" aria-label={t("stats.chartLabel")}>
               {stats.new_prompts_by_day.map((point) => (
-                <div key={point.date} className="stat-chart-col" title={`${formatDate(point.date)}: ${point.count}`}>
+                <div
+                  key={point.date}
+                  className="stat-chart-col"
+                  title={`${formatDate(point.date)}: ${point.count}`}
+                >
                   <div
                     className="stat-chart-bar"
                     style={{ height: `${(point.count / maxDayCount) * 100}%` }}

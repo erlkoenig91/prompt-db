@@ -1,4 +1,5 @@
-import { VIEW_MODES, type ViewMode } from "../viewMode";
+import { useViewModes, type ViewMode } from "../viewMode";
+import { useLocale } from "../LocaleContext";
 
 interface ViewModeSwitchProps {
   value: ViewMode;
@@ -6,10 +7,13 @@ interface ViewModeSwitchProps {
 }
 
 export default function ViewModeSwitch({ value, onChange }: ViewModeSwitchProps) {
+  const { t } = useLocale();
+  const viewModes = useViewModes();
+
   return (
-    <div className="view-switch" role="group" aria-label="Ansicht wählen">
-      <span className="view-switch-label">Ansicht</span>
-      {VIEW_MODES.map((mode) => (
+    <div className="view-switch" role="group" aria-label={t("viewMode.choose")}>
+      <span className="view-switch-label">{t("viewMode.label")}</span>
+      {viewModes.map((mode) => (
         <button
           key={mode.id}
           type="button"

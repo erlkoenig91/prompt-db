@@ -2,11 +2,14 @@ import { FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, ApiError } from "../api";
 import { useAuth } from "../AuthContext";
+import { useLocale } from "../LocaleContext";
 import BrandLogo from "../components/BrandLogo";
 import AppVersion from "../components/AppVersion";
+import LanguageSwitch from "../components/LanguageSwitch";
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const { t, translateApiError } = useLocale();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -26,7 +29,8 @@ export default function LoginPage() {
     try {
       await login(username, password);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Anmeldung fehlgeschlagen");
+      const message = err instanceof ApiError ? err.message : t("auth.loginFailed");
+      setError(err instanceof ApiError ? translateApiError(message) : message);
     } finally {
       setLoading(false);
     }
@@ -36,11 +40,14 @@ export default function LoginPage() {
     <div className="auth-page">
       <BrandLogo size="lg" showText={false} />
       <div className="auth-card card">
-        <h2>Anmelden</h2>
-        <p className="muted">Prompt-Verwaltung für LLM-Workflows</p>
+        <div className="auth-card-top">
+          <h2>{t("auth.login")}</h2>
+          <LanguageSwitch />
+        </div>
+        <p className="muted">{t("auth.tagline")}</p>
         {error && <div className="error">{error}</div>}
         <form onSubmit={handleSubmit}>
-          <label htmlFor="username">Benutzername</label>
+          <label htmlFor="username">{t("auth.username")}</label>
           <input
             id="username"
             value={username}
@@ -48,7 +55,7 @@ export default function LoginPage() {
             autoComplete="username"
             required
           />
-          <label htmlFor="password">Passwort</label>
+          <label htmlFor="password">{t("auth.password")}</label>
           <input
             id="password"
             type="password"
@@ -58,16 +65,16 @@ export default function LoginPage() {
             required
           />
           <button type="submit" disabled={loading}>
-            {loading ? "Anmelden…" : "Anmelden"}
+            {loading ? t("auth.loginLoading") : t("auth.login")}
           </button>
         </form>
         <p className="muted">
           {allowRegistration ? (
             <>
-              Noch kein Konto? <Link to="/register">Registrieren</Link>
+              {t("auth.noAccount")} <Link to="/register">{t("auth.register")}</Link>
             </>
           ) : (
-            "Registrierung ist derzeit deaktiviert."
+            t("auth.registrationDisabled")
           )}
         </p>
       </div>

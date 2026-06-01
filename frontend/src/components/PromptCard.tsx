@@ -1,5 +1,6 @@
 import type { Prompt } from "../types";
 import type { ViewMode } from "../viewMode";
+import { useLocale } from "../LocaleContext";
 
 interface PromptCardProps {
   prompt: Prompt;
@@ -22,10 +23,14 @@ export default function PromptCard({
   onDelete,
   taskLabel,
 }: PromptCardProps) {
+  const { t } = useLocale();
   const preview =
     viewMode === "compact"
       ? prompt.content.replace(/\s+/g, " ").trim().slice(0, 140)
       : prompt.content;
+
+  const visibilityLabel =
+    prompt.visibility === "public" ? t("common.public") : t("common.private");
 
   return (
     <article className={`card prompt-card prompt-card--${viewMode}`}>
@@ -40,17 +45,17 @@ export default function PromptCard({
           type="button"
           className={`copy-btn ${copied ? "copied" : ""}`}
           onClick={onCopy}
-          title="Prompt-Text kopieren"
-          aria-label="Prompt-Text kopieren"
+          title={t("dashboard.copyPrompt")}
+          aria-label={t("dashboard.copyPrompt")}
         >
-          {copied ? "Kopiert" : "Kopieren"}
+          {copied ? t("common.copied") : t("common.copy")}
         </button>
       </div>
 
       <div className="meta-row">
         <span className="badge">{prompt.model}</span>
         <span className="badge">{taskLabel(prompt.task)}</span>
-        <span className={`badge ${prompt.visibility}`}>{prompt.visibility}</span>
+        <span className={`badge ${prompt.visibility}`}>{visibilityLabel}</span>
         {prompt.owner_username && <span className="badge">@{prompt.owner_username}</span>}
       </div>
 
@@ -66,10 +71,10 @@ export default function PromptCard({
       {isOwner && (
         <div className="prompt-actions">
           <button type="button" className="secondary" onClick={onEdit}>
-            Bearbeiten
+            {t("common.edit")}
           </button>
           <button type="button" className="danger" onClick={onDelete}>
-            Löschen
+            {t("common.delete")}
           </button>
         </div>
       )}

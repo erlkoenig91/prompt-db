@@ -1,12 +1,36 @@
+import { useMemo } from "react";
+import { useLocale } from "./LocaleContext";
+
 export type ViewMode = "list" | "grid" | "compact";
 
 const STORAGE_KEY = "promptdb-view-mode";
 
-export const VIEW_MODES: { id: ViewMode; label: string; hint: string }[] = [
-  { id: "list", label: "Liste", hint: "Ausführliche Einzelansicht" },
-  { id: "grid", label: "Kacheln", hint: "Mehrspaltige Kachelansicht" },
-  { id: "compact", label: "Kompakt", hint: "Dichte Tabellenansicht" },
-];
+export const VIEW_MODE_IDS: ViewMode[] = ["list", "grid", "compact"];
+
+export function useViewModes() {
+  const { t } = useLocale();
+  return useMemo(
+    () => [
+      { id: "list" as ViewMode, label: t("viewMode.list"), hint: t("viewMode.listHint") },
+      { id: "grid" as ViewMode, label: t("viewMode.grid"), hint: t("viewMode.gridHint") },
+      { id: "compact" as ViewMode, label: t("viewMode.compact"), hint: t("viewMode.compactHint") },
+    ],
+    [t],
+  );
+}
+
+export function useScopes() {
+  const { t } = useLocale();
+  return useMemo(
+    () =>
+      [
+        { value: "all", label: t("scope.all") },
+        { value: "mine", label: t("scope.mine") },
+        { value: "public", label: t("scope.public") },
+      ] as const,
+    [t],
+  );
+}
 
 export function loadViewMode(): ViewMode {
   const stored = localStorage.getItem(STORAGE_KEY);
