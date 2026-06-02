@@ -7,6 +7,7 @@ import ViewModeSwitch from "../components/ViewModeSwitch";
 import AppHeader from "../components/AppHeader";
 import type { Meta, Prompt, PromptInput } from "../types";
 import { loadViewMode, saveViewMode, useScopes, type ViewMode } from "../viewMode";
+import { copyToClipboard } from "../clipboard";
 
 const emptyForm: PromptInput = {
   title: "",
@@ -172,7 +173,7 @@ export default function DashboardPage() {
 
   async function copyPrompt(prompt: Prompt) {
     try {
-      await navigator.clipboard.writeText(prompt.content);
+      await copyToClipboard(prompt.content);
       setCopiedId(prompt.id);
       window.setTimeout(() => setCopiedId((current) => (current === prompt.id ? null : current)), 2000);
       api
