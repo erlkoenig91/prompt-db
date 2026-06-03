@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - "v*.*.*"
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -13,21 +14,49 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
-  release:
+  resolve-version:
     runs-on: ubuntu-latest
+    outputs:
+      app_version: ${{ steps.version.outputs.app_version }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Resolve version
         id: version
         run: |
-          if [ -n "${GITHUB_REF_NAME#v}" ]; then
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
             APP_VERSION="${GITHUB_REF_NAME#v}"
           else
             APP_VERSION="$(tr -d '[:space:]' < VERSION)"
           fi
           echo "app_version=${APP_VERSION}" >> "$GITHUB_OUTPUT"
           echo "Version: ${APP_VERSION}"
+
+  build:
+    needs: resolve-version
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: prompt-db-backend
+            file: backend/Dockerfile
+            platform: linux/amd64
+            runner: ubuntu-latest
+          - image: prompt-db-backend
+            file: backend/Dockerfile
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
+          - image: prompt-db-frontend
+            file: frontend/Dockerfile
+            platform: linux/amd64
+            runner: ubuntu-latest
+          - image: prompt-db-frontend
+            file: frontend/Dockerfile
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
 
       - uses: docker/setup-buildx-action@v3
 
@@ -37,32 +66,74 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push backend
+      - name: Build and push (${{ matrix.platform }})
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: backend/Dockerfile
-          platforms: linux/amd64,linux/arm64
+          file: ${{ matrix.file }}
+          platforms: ${{ matrix.platform }}
           push: true
+          build-args: ${{ matrix.image == 'prompt-db-frontend' && format('VITE_API_URL={0}', vars.VITE_API_URL) || '' }}
           tags: |
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/prompt-db-backend:${{ steps.version.outputs.app_version }}
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/prompt-db-backend:latest
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/prompt-db-backend:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image }}:${{ needs.resolve-version.outputs.app_version }}-${{ matrix.platform }}
+          outputs: type=image,push-by-digest=true,name=${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image }},name-canonical=true
 
-      - name: Build and push frontend
-        uses: docker/build-push-action@v6
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          echo "${{ steps.build.outputs.digest }}" > "/tmp/digests/${{ matrix.platform }}.digest"
+
+      - uses: actions/upload-artifact@v4
         with:
-          context: .
-          file: frontend/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          build-args: |
-            VITE_API_URL=${{ vars.VITE_API_URL }}
-            APP_VERSION=${{ steps.version.outputs.app_version }}
-          tags: |
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/prompt-db-frontend:${{ steps.version.outputs.app_version }}
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/prompt-db-frontend:latest
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/prompt-db-frontend:${{ github.sha }}
+          name: digests-${{ matrix.image }}-${{ matrix.platform }}
+          path: /tmp/digests/*.digest
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    needs: [resolve-version, build]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image: [prompt-db-backend, prompt-db-frontend]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: digests-${{ matrix.image }}-*
+          merge-multiple: true
+          path: /tmp/digests
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create multi-arch manifest
+        env:
+          IMAGE: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image }}
+          VERSION: ${{ needs.resolve-version.outputs.app_version }}
+          SHA: ${{ github.sha }}
+        run: |
+          AMD64_DIGEST="$(tr -d '[:space:]' < /tmp/digests/linux/amd64.digest)"
+          ARM64_DIGEST="$(tr -d '[:space:]' < /tmp/digests/linux/arm64.digest)"
+          echo "amd64: ${AMD64_DIGEST}"
+          echo "arm64: ${ARM64_DIGEST}"
+          docker buildx imagetools create \
+            -t "${IMAGE}:${VERSION}" \
+            -t "${IMAGE}:latest" \
+            -t "${IMAGE}:${SHA}" \
+            "${AMD64_DIGEST}" \
+            "${ARM64_DIGEST}"
+
+  release:
+    needs: [resolve-version, merge]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -73,8 +144,10 @@ jobs:
 
             | Komponente | Image |
             |------------|-------|
-            | Backend | `${{ env.REGISTRY }}/${{ github.repository_owner }}/prompt-db-backend:${{ steps.version.outputs.app_version }}` |
-            | Frontend | `${{ env.REGISTRY }}/${{ github.repository_owner }}/prompt-db-frontend:${{ steps.version.outputs.app_version }}` |
+            | Backend | `${{ env.REGISTRY }}/${{ github.repository_owner }}/prompt-db-backend:${{ needs.resolve-version.outputs.app_version }}` |
+            | Frontend | `${{ env.REGISTRY }}/${{ github.repository_owner }}/prompt-db-frontend:${{ needs.resolve-version.outputs.app_version }}` |
+
+            Multi-Arch: `linux/amd64`, `linux/arm64` (native Runner, kein QEMU für npm).
 
             Zusätzliche Tags: `${{ github.sha }}`, `latest`
 
@@ -82,7 +155,7 @@ jobs:
 
             ```bash
             export REGISTRY=${{ env.REGISTRY }}/${{ github.repository_owner }}
-            export TAG=${{ steps.version.outputs.app_version }}
+            export TAG=${{ needs.resolve-version.outputs.app_version }}
 
             kubectl set image deployment/prompt-db-backend \
               backend=${REGISTRY}/prompt-db-backend:${TAG} -n prompt-db
