@@ -36,11 +36,11 @@ class UserLogin(BaseModel):
 
 def validate_password_strength(value: str) -> str:
     if not re.search(r"[A-Z]", value):
-        raise ValueError("Passwort muss mindestens einen Großbuchstaben enthalten")
+        raise ValueError("Password must contain at least one uppercase letter")
     if not re.search(r"[a-z]", value):
-        raise ValueError("Passwort muss mindestens einen Kleinbuchstaben enthalten")
+        raise ValueError("Password must contain at least one lowercase letter")
     if not re.search(r"\d", value):
-        raise ValueError("Passwort muss mindestens eine Zahl enthalten")
+        raise ValueError("Password must contain at least one digit")
     return value
 
 
@@ -143,7 +143,7 @@ class PromptBase(BaseModel):
     def normalize_model(cls, value: str) -> str:
         normalized = value.strip()
         if not normalized:
-            raise ValueError("Modellname darf nicht leer sein")
+            raise ValueError("Model name must not be empty")
         return normalized
 
     @field_validator("task")
@@ -151,7 +151,7 @@ class PromptBase(BaseModel):
     def validate_task(cls, value: str) -> str:
         if value not in VALID_TASKS:
             labels = ", ".join(TASKS.values())
-            raise ValueError(f"Ungültige Aufgabe. Erlaubt: {labels}")
+            raise ValueError(f"Invalid task. Allowed: {labels}")
         return value
 
 
@@ -175,7 +175,7 @@ class PromptUpdate(BaseModel):
             return None
         normalized = value.strip()
         if not normalized:
-            raise ValueError("Modellname darf nicht leer sein")
+            raise ValueError("Model name must not be empty")
         return normalized
 
     @field_validator("task")
@@ -184,7 +184,7 @@ class PromptUpdate(BaseModel):
         if value is None:
             return None
         if value not in VALID_TASKS:
-            raise ValueError("Ungültige Aufgabe")
+            raise ValueError("Invalid task")
         return value
 
 

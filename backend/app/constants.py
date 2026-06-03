@@ -9,26 +9,26 @@ DEFAULT_MODELS = [
 ]
 
 TASKS: dict[str, str] = {
-    "architecture": "Architektur",
+    "architecture": "Architecture",
     "debugging": "Debugging",
-    "code-review": "Code-Review",
-    "documentation": "Dokumentation",
+    "code-review": "Code review",
+    "documentation": "Documentation",
     "testing": "Testing",
     "refactoring": "Refactoring",
-    "planning": "Planung",
-    "security": "Sicherheit",
+    "planning": "Planning",
+    "security": "Security",
     "onboarding": "Onboarding",
-    "other": "Sonstiges",
+    "other": "Other",
 }
 
 PASSWORD_RULES = [
-    {"id": "length", "label": "Mindestens 12 Zeichen"},
-    {"id": "uppercase", "label": "Mindestens ein Großbuchstabe (A–Z)"},
-    {"id": "lowercase", "label": "Mindestens ein Kleinbuchstabe (a–z)"},
-    {"id": "digit", "label": "Mindestens eine Zahl (0–9)"},
+    {"id": "length", "label": "At least 12 characters"},
+    {"id": "uppercase", "label": "At least one uppercase letter (A–Z)"},
+    {"id": "lowercase", "label": "At least one lowercase letter (a–z)"},
+    {"id": "digit", "label": "At least one digit (0–9)"},
 ]
 
 USERNAME_RULES = [
-    {"id": "length", "label": "3–64 Zeichen"},
-    {"id": "charset", "label": "Nur Buchstaben, Zahlen, _ und -"},
+    {"id": "length", "label": "3–64 characters"},
+    {"id": "charset", "label": "Letters, digits, _ and - only"},
 ]

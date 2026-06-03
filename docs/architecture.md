@@ -1,6 +1,6 @@
-# Architektur
+# Architecture
 
-## Komponenten
+## Components
 
 ```mermaid
 flowchart TB
@@ -20,7 +20,7 @@ flowchart TB
     API --> Alembic
   end
 
-  subgraph data [Daten]
+  subgraph data [Data]
     PG[(PostgreSQL 16)]
   end
 
@@ -29,72 +29,72 @@ flowchart TB
   API --> PG
 ```
 
-| Schicht | Technologie | Port |
-|---------|-------------|------|
-| Frontend | React, TypeScript, Vite, nginx | 80 (Container) |
+| Layer | Technology | Port |
+|-------|------------|------|
+| Frontend | React, TypeScript, Vite, nginx | 80 (container) |
 | Backend | FastAPI, SQLAlchemy async, Alembic | 8000 |
-| Datenbank | PostgreSQL 16 | 5432 |
+| Database | PostgreSQL 16 | 5432 |
 
-## Verzeichnisstruktur
+## Directory structure
 
 ```
 prompt-db/
 ├── backend/
-│   ├── app/              # FastAPI-Anwendung
-│   ├── alembic/          # DB-Migrationen
+│   ├── app/              # FastAPI application
+│   ├── alembic/          # DB migrations
 │   ├── Dockerfile
-│   └── entrypoint.sh     # Migration + Seed beim Start
+│   └── entrypoint.sh     # Migration + seed on startup
 ├── frontend/
 │   ├── src/              # React UI
 │   ├── nginx.conf.template
 │   └── Dockerfile
-├── k8s/                  # Kubernetes-Manifeste
-├── scripts/              # Hilfsskripte
-├── docs/                 # Dokumentation
+├── k8s/                  # Kubernetes manifests
+├── scripts/              # Helper scripts
+├── docs/                 # Documentation
 ├── docker-compose.yml
-├── VERSION               # Semver (Single Source of Truth)
+├── VERSION               # Semver (single source of truth)
 └── .github/workflows/    # GitHub Actions CI/CD
 ```
 
-## Authentifizierung
+## Authentication
 
-- JWT Access Token (kurzlebig) + Refresh Token (Rotation mit `jti` in DB)
-- Passwort-Hashing mit bcrypt
-- Rate Limiting auf Auth-Endpunkten
+- JWT access token (short-lived) + refresh token (rotation with `jti` in DB)
+- Password hashing with bcrypt
+- Rate limiting on auth endpoints
 
-## Prompt-Modell
+## Prompt model
 
-| Feld | Beschreibung |
-|------|--------------|
-| Titel, Text, Beschreibung | Inhalt |
-| Modell | Freitext / aus Meta-Liste |
-| Aufgabe (`task`) | Kategorisierung |
-| Tags | Liste |
-| Sichtbarkeit | `private` oder `public` |
+| Field | Description |
+|-------|-------------|
+| Title, text, description | Content |
+| Model | Free text / from meta list |
+| Task (`task`) | Category |
+| Tags | List |
+| Visibility | `private` or `public` |
 
-Private Prompts sind nur für den Besitzer sichtbar. Fremde Ressourcen liefern **404** (kein Information Leak via 403).
+Private prompts are visible only to the owner. Foreign resources return **404** (no information leak via 403).
 
 ## API
 
-Basis-URL: `/api`
+Base URL: `/api`
 
-| Methode | Pfad | Auth |
-|---------|------|------|
-| POST | `/auth/register` | Nein |
-| POST | `/auth/login` | Nein |
-| POST | `/auth/refresh` | Refresh Token |
-| GET | `/auth/me` | Ja |
-| GET/POST | `/prompts` | Ja |
+| Method | Path | Auth |
+|--------|------|------|
+| POST | `/auth/register` | No |
+| POST | `/auth/login` | No |
+| POST | `/auth/refresh` | Refresh token |
+| GET | `/auth/me` | Yes |
+| GET/POST | `/prompts` | Yes |
 | PATCH/DELETE | `/prompts/{id}` | Owner |
-| GET | `/meta` | Nein |
+| GET | `/meta` | No |
 
-OpenAPI unter `/docs` nur in `ENVIRONMENT=development`.
+OpenAPI at `/docs` only when `ENVIRONMENT=development`.
 
-## Container-Images
+## Container images
 
-Zwei getrennte Images:
+Two separate images:
 
-- **prompt-db-backend** – Python-App, führt Migrationen beim Start aus
-- **prompt-db-frontend** – Statisches Build + nginx mit CSP
+- **prompt-db-backend** – Python app, runs migrations on startup
+- **prompt-db-frontend** – Static build + nginx with CSP
 
-Build und Versionierung: [ci-cd.md](./ci-cd.md)
+Build and versioning: [ci-cd.md](./ci-cd.md)

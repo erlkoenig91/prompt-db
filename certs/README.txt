@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
-# TLS-Zertifikate hier ablegen (optional):
+# Place TLS certificates here (optional):
 #   tls.crt
 #   tls.key
 #
-# Mit TLS: HTTP (Port 80) leitet auf HTTPS (Port 443) um.
-# Ohne Zertifikate: nur HTTP auf Port 80.
+# With TLS: HTTP (port 80) redirects to HTTPS (port 443).
+# Without certificates: HTTP only on port 80.

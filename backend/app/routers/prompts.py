@@ -43,7 +43,7 @@ async def list_prompts(
 
     if scope == "mine":
         if not current_user:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Anmeldung erforderlich")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Sign-in required")
         query = query.where(Prompt.owner_id == current_user.id)
     elif scope == "public":
         query = query.where(Prompt.visibility == PromptVisibility.PUBLIC)
@@ -105,11 +105,11 @@ async def get_prompt(
     result = await db.execute(select(Prompt).join(Prompt.owner).where(Prompt.id == prompt_id))
     prompt = result.scalar_one_or_none()
     if not prompt:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt nicht gefunden")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt not found")
 
     is_owner = current_user and prompt.owner_id == current_user.id
     if prompt.visibility != PromptVisibility.PUBLIC and not is_owner:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt nicht gefunden")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt not found")
 
     return to_prompt_response(prompt)
 
@@ -123,11 +123,11 @@ async def register_copy(
     result = await db.execute(select(Prompt).where(Prompt.id == prompt_id))
     prompt = result.scalar_one_or_none()
     if not prompt:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt nicht gefunden")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt not found")
 
     is_owner = current_user and prompt.owner_id == current_user.id
     if prompt.visibility != PromptVisibility.PUBLIC and not is_owner:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt nicht gefunden")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt not found")
 
     updated = await db.execute(
         update(Prompt)
@@ -149,9 +149,9 @@ async def update_prompt(
     result = await db.execute(select(Prompt).join(Prompt.owner).where(Prompt.id == prompt_id))
     prompt = result.scalar_one_or_none()
     if not prompt:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt nicht gefunden")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt not found")
     if prompt.owner_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt nicht gefunden")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt not found")
 
     for key, value in payload.model_dump(exclude_unset=True).items():
         setattr(prompt, key, value)
@@ -170,7 +170,7 @@ async def delete_prompt(
     result = await db.execute(select(Prompt).where(Prompt.id == prompt_id))
     prompt = result.scalar_one_or_none()
     if not prompt:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt nicht gefunden")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt not found")
     if prompt.owner_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt nicht gefunden")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt not found")
     db.delete(prompt)

@@ -1,22 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Setzt die PostgreSQL-Datenbank zurück (Volume löschen) und startet neu.
-# Alle Prompts/Benutzer gehen verloren!
+# Resets the PostgreSQL database (deletes volume) and restarts the stack.
+# All prompts and users are lost!
 
 cd "$(dirname "$0")/.."
 
-echo "WARNUNG: Löscht das Docker-Volume postgres_data und alle DB-Daten."
-read -r -p "Fortfahren? [y/N] " confirm
+echo "WARNING: This deletes the Docker volume postgres_data and all DB data."
+read -r -p "Continue? [y/N] " confirm
 if [[ ! "$confirm" =~ ^[yY]$ ]]; then
-  echo "Abgebrochen."
+  echo "Aborted."
   exit 1
 fi
 
 docker compose down -v
 echo ""
-echo "Starte Stack mit Passwort aus .env (POSTGRES_PASSWORD)..."
+echo "Starting stack with password from .env (POSTGRES_PASSWORD)..."
 docker compose up -d --build
 
 echo ""
-echo "Fertig. Logs: docker compose logs -f backend"
+echo "Done. Logs: docker compose logs -f backend"

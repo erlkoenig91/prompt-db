@@ -1,82 +1,56 @@
-Prompt DB – Open-Source-Lizenz (nicht-kommerziell)
+Prompt DB – Open Source License (Non-Commercial)
 
 Copyright (c) 2026 Julian Kramer
 
-================================================================================
-DEUTSCH
-================================================================================
+1. Grant
 
-1. Gewährung
+   Everyone who receives a copy of this software and associated
+   documentation (the “Software”) may use it free of charge under the terms
+   of this license.
 
-   Jede Person, die eine Kopie dieser Software und der zugehörigen
-   Dokumentation (nachfolgend „Software“) erhält, darf die Software
-   kostenfrei nutzen, unter den Bedingungen dieser Lizenz.
+2. Permitted (non-commercial)
 
-2. Erlaubt (nicht-kommerziell)
+   You may:
 
-   Sie dürfen die Software:
+   - use the Software privately and in organizations without a commercial purpose;
+   - study, test, and use it for non-commercial projects;
+   - modify it and create derivative works;
+   - publish and distribute source code and derivative works,
 
-   - privat und in Organisationen ohne kommerziellen Zweck nutzen;
-   - studieren, testen und für nicht-kommerzielle Projekte einsetzen;
-   - verändern und abgeleitete Werke erstellen;
-   - Quellcode und abgeleitete Werke veröffentlichen und weitergeben,
+   provided you comply with all terms of this license.
 
-   sofern alle Bedingungen dieser Lizenz eingehalten werden.
+3. Prohibited
 
-3. Verboten
+   Without express written consent from the copyright holder, you may not:
 
-   Ohne ausdrückliche schriftliche Zustimmung des Urheberrechtsinhabers ist
-   es untersagt:
+   a) Commercial use – any use primarily or directly aimed at generating revenue,
+      marketing, selling, providing for a fee, or supporting commercial services;
 
-   a) Kommerzielle Nutzung – jede Nutzung, die primär oder unmittelbar der
-      Erzielung von Einnahmen, der Vermarktung, dem Verkauf, der
-      Bereitstellung gegen Entgelt oder der Unterstützung kommerzieller
-      Dienstleistungen dient;
+   b) Relicensing – distribute, sublicense, or recertify the Software or parts
+      of it under another license, other terms, or as your own product;
 
-   b) Relizenzierung – die Software oder Teile davon unter einer anderen
-      Lizenz, anderen Nutzungsbedingungen oder als eigenes Produkt
-      weiterzugeben, weiterzulizenzieren oder neu zu zertifizieren;
+   c) Notice removal – remove or falsify copyright, license, or attribution notices;
 
-   c) Entfernung von Hinweisen – Copyright-, Lizenz- oder Urheberangaben zu
-      entfernen oder zu verfälschen;
+   d) Trademarks – use the name “Prompt DB”, logos, or other marks of the
+      copyright holder without permission.
 
-   d) Markenrechte – den Namen „Prompt DB“, Logos oder andere Kennzeichen
-      des Urheberrechtsinhabers ohne Zustimmung zu verwenden.
+4. Distribution of derivative works
 
-4. Weitergabe abgeleiteter Werke
+   If derivative works are published or distributed, they must be under the
+   same terms as this license. Changing the license terms is not permitted.
 
-   Werden abgeleitete Werke veröffentlicht oder weitergegeben, müssen diese
-   unter denselben Bedingungen wie diese Lizenz stehen. Eine Änderung der
-   Lizenzbedingungen ist nicht zulässig.
+5. No warranty
 
-5. Keine Garantie
+   THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
 
-   DIE SOFTWARE WIRD „WIE BESEHEN“ BEREITGESTELLT, OHNE JEGLICHE AUSDRÜCKLICHE
-   ODER STILLSCHWEIGENDE GEWÄHRLEISTUNG, EINSCHLIESSLICH, ABER NICHT
-   BESCHRÄNKT AUF GEWÄHRLEISTUNG DER MARKTGÄNGIGKEIT, EIGNUNG FÜR EINEN
-   BESTIMMTEN ZWECK UND NICHTVERLETZUNG VON RECHTEN DRITTER.
+6. Limitation of liability
 
-6. Haftungsbeschränkung
+   THE COPYRIGHT HOLDER SHALL NOT BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
+   LIABILITY ARISING FROM USE OF THE SOFTWARE.
 
-   DER URHEBERRECHTSINHABER HAFTET NICHT FÜR ANSPRÜCHE, SCHÄDEN ODER SONSTIGE
-   HAFTUNG, DIE AUS DER NUTZUNG DER SOFTWARE ENTSTEHEN.
+7. Commercial use
 
-7. Kommerzielle Nutzung
-
-   Für kommerzielle Nutzung, Weiterlizenzierung oder Integration in
-   kommerzielle Produkte ist eine separate schriftliche Vereinbarung mit dem
-   Urheberrechtsinhaber erforderlich.
-
-================================================================================
-ENGLISH (informative summary – German text is legally controlling)
-================================================================================
-
-You may use, modify, and share this software for non-commercial purposes
-only, provided you keep this license and copyright notices intact and do not
-relicense the software under different terms.
-
-Commercial use, relicensing, and offering the software (or derivatives) under
-another license or as a separately certified product are prohibited without
-written permission from the copyright holder.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+   Commercial use, relicensing, or integration into commercial products
+   requires a separate written agreement with the copyright holder.

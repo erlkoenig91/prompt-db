@@ -41,11 +41,11 @@ def to_user_response(user: User) -> UserResponse:
 @limiter.limit("5/minute")
 async def register(request: Request, payload: UserCreate, db: AsyncSession = Depends(get_db)) -> User:
     if not await get_allow_registration(db):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Registrierung deaktiviert")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Registration disabled")
 
     existing = await get_user_by_username(db, payload.username)
     if existing:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Benutzername bereits vergeben")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username already taken")
 
     admin_count = await db.scalar(select(func.count()).select_from(User).where(User.is_admin.is_(True)))
     user = User(
@@ -64,7 +64,7 @@ async def register(request: Request, payload: UserCreate, db: AsyncSession = Dep
 async def login(request: Request, payload: UserLogin, db: AsyncSession = Depends(get_db)) -> TokenResponse:
     user = await authenticate_user(db, payload.username, payload.password)
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Ungültige Anmeldedaten")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     access_token, refresh_token = await issue_token_pair(db, user.id)
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
@@ -75,16 +75,16 @@ async def refresh(request: Request, payload: RefreshRequest, db: AsyncSession = 
     try:
         user_id, jti = decode_refresh_token(payload.refresh_token)
     except JWTError as exc:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Ungültiger Refresh-Token") from exc
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token") from exc
 
     user = await get_user_by_id(db, user_id)
     if not user or not user.is_active:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Benutzer nicht gefunden")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 
     try:
         access_token, refresh_token = await rotate_refresh_token(db, user.id, jti)
     except JWTError as exc:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Ungültiger Refresh-Token") from exc
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token") from exc
 
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 

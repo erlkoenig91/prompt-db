@@ -1,8 +1,8 @@
-# CI/CD mit GitHub Actions
+# CI/CD with GitHub Actions
 
-Die Workflows unter [`.github/workflows/`](../.github/workflows/) validieren Pull Requests, bauen Container-Images und erstellen Releases.
+Workflows under [`.github/workflows/`](../.github/workflows/) validate pull requests, build container images, and create releases.
 
-## Pipeline-Überblick
+## Pipeline overview
 
 ```mermaid
 flowchart LR
@@ -10,24 +10,24 @@ flowchart LR
   V2[validate:frontend] --> R
 ```
 
-| Workflow | Auslöser | Zweck |
-|----------|----------|-------|
-| `ci.yml` | Push/PR auf `main` | Python-Syntax, Alembic-Historie, Frontend-Build |
-| `release.yml` | Git-Tag `v*.*.*` | Images nach GHCR pushen, GitHub Release |
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `ci.yml` | Push/PR to `main` | Python syntax, Alembic history, frontend build |
+| `release.yml` | Git tag `v*.*.*` or manual | Push images to GHCR, GitHub Release |
 
-Build- und Release-Jobs laufen nur bei semver Git-Tags (`v1.2.3`).
+Release builds use native `ubuntu-latest` (amd64) and `ubuntu-24.04-arm` (arm64) runners, then merge multi-arch manifests.
 
-## Versionierung
+## Versioning
 
-Die **Single Source of Truth** ist die Datei [`VERSION`](../VERSION) im Repository-Root.
+The **single source of truth** is [`VERSION`](../VERSION) in the repository root.
 
-| Ort | Verwendung |
-|-----|------------|
-| `VERSION` | Releases, Docker-Build, API, UI |
-| Git-Tag `v1.2.3` | Löst Release-Pipeline aus; Image-Tag `1.2.3` |
-| `frontend/package.json` | Sollte mit `VERSION` übereinstimmen |
+| Location | Usage |
+|----------|-------|
+| `VERSION` | Releases, Docker build, API, UI |
+| Git tag `v1.2.3` | Triggers release pipeline; image tag `1.2.3` |
+| `frontend/package.json` | Should match `VERSION` |
 
-### Release erstellen
+### Create a release
 
 ```bash
 echo "1.1.0" > VERSION
@@ -38,48 +38,54 @@ git push origin main
 git push origin v1.1.0
 ```
 
-Die Pipeline erzeugt u. a.:
+The pipeline produces:
 
 - `ghcr.io/erlkoenig91/prompt-db-backend:1.1.0`
 - `ghcr.io/erlkoenig91/prompt-db-frontend:1.1.0`
 
-Zusätzliche Tags: `${{ github.sha }}`, `latest`
+Additional tags: `${{ github.sha }}`, `latest`
 
-Optional mit Pre-Release-Suffix: `v1.0.0-rc.1`
+Pre-release suffix is supported: `v1.0.0-rc.1`
 
-## GitHub einrichten
+Manual re-run without a new tag:
 
-### 1. Repository auf GitHub anlegen
+```bash
+gh workflow run release.yml --ref main
+```
+
+## GitHub setup
+
+### 1. Create the repository on GitHub
 
 ```bash
 git remote add origin git@github.com:erlkoenig91/prompt-db.git
 git push -u origin main
 ```
 
-### 2. Container Registry (GHCR)
+### 2. Container registry (GHCR)
 
-Images werden automatisch nach **GitHub Container Registry** gepusht:
+Images are pushed automatically to **GitHub Container Registry**:
 
 ```
 ghcr.io/erlkoenig91/prompt-db-backend:<tag>
 ghcr.io/erlkoenig91/prompt-db-frontend:<tag>
 ```
 
-Unter **Package settings** das Paket ggf. auf **public** stellen, wenn das Repo öffentlich ist.
+Under **Package settings**, set the package to **public** if the repo is public.
 
-### 3. Actions-Variablen
+### 3. Actions variables
 
-| Variable | Pflicht | Beschreibung |
-|----------|---------|--------------|
-| `VITE_API_URL` | Optional | Öffentliche Backend-URL für den Frontend-Build (getrennte API-Domain) |
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `VITE_API_URL` | Optional | Public backend URL for the frontend build (separate API domain) |
 
-Leer lassen, wenn das Frontend die API über den eingebauten nginx-Proxy (`/api/`) anspricht.
+Leave empty if the frontend calls the API via the built-in nginx proxy (`/api/`).
 
-`GITHUB_TOKEN` reicht für Push nach GHCR – kein separates Registry-Secret nötig.
+`GITHUB_TOKEN` is sufficient for GHCR push — no separate registry secret needed.
 
-## Images lokal nutzen
+## Use images locally
 
-Mit Personal Access Token (`read:packages`):
+With a personal access token (`read:packages`):
 
 ```bash
 echo $GITHUB_TOKEN | docker login ghcr.io -u erlkoenig91 --password-stdin
@@ -87,22 +93,22 @@ docker pull ghcr.io/erlkoenig91/prompt-db-backend:1.0.0
 docker pull ghcr.io/erlkoenig91/prompt-db-frontend:1.0.0
 ```
 
-Oder das lokale Skript:
+Or use the local script:
 
 ```bash
 export VITE_API_URL=https://api.example.com
 ./scripts/build-images.sh ghcr.io/erlkoenig91 1.0.0
 ```
 
-## Kubernetes-Deployment mit CI-Images
+## Kubernetes deployment with CI images
 
-In `k8s/backend.yaml` und `k8s/frontend.yaml` anpassen:
+Adjust in `k8s/backend.yaml` and `k8s/frontend.yaml`:
 
 ```yaml
 image: ghcr.io/erlkoenig91/prompt-db-backend:1.0.0
 ```
 
-Rollout nach neuem Tag:
+Rollout after a new tag:
 
 ```bash
 kubectl set image deployment/prompt-db-backend \
@@ -115,11 +121,12 @@ kubectl set image deployment/prompt-db-frontend \
 
 Details: [deployment.md](./deployment.md)
 
-## Fehlerbehebung
+## Troubleshooting
 
-| Problem | Lösung |
-|---------|--------|
-| Release-Workflow startet nicht | Tag muss `v1.2.3` Format haben und auf `main` gepusht sein |
-| Frontend ruft falsche API auf | `VITE_API_URL` in GitHub Actions Variables setzen und Release neu bauen |
-| `denied: installation not allowed` | Workflow braucht `packages: write` (bereits in `release.yml`) |
-| CI schlägt bei Frontend fehl | `npm ci` lokal testen; `VERSION`-Datei muss existieren |
+| Problem | Solution |
+|---------|----------|
+| Release workflow does not start | Tag must match `v1.2.3` and be pushed |
+| Frontend calls wrong API | Set `VITE_API_URL` in GitHub Actions variables and rebuild |
+| `denied: installation not allowed` | Workflow needs `packages: write` (already in `release.yml`) |
+| CI fails on frontend | Test `npm ci` locally; `VERSION` file must exist |
+| arm64 build fails with QEMU | Use the current `release.yml` (native ARM runners) |

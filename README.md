@@ -4,127 +4,128 @@
 
 # Prompt DB
 
-Persönliche Prompt-Datenbank mit Web-Oberfläche: Prompts mit Metadaten (Modell, Aufgabe, Tags, Sichtbarkeit) erstellen, privat speichern oder öffentlich teilen.
+Personal prompt database with a web UI: create prompts with metadata (model, task, tags, visibility), keep them private, or share them publicly.
 
 Repository: [github.com/erlkoenig91/prompt-db](https://github.com/erlkoenig91/prompt-db)
 
 ## Screenshots
 
-### Prompt-Übersicht
+### Prompt overview
 
-Suche, Filter und Listenansicht mit Kopieren-Button.
+Search, filters, and list view with copy button.
 
-![Prompt-Übersicht](docs/examples/overview.png)
+![Prompt overview](docs/examples/overview.png)
 
-### Statistik
+### Statistics
 
-Öffentliche Prompts: meist kopierte Einträge und neue Prompts im Zeitverlauf.
+Public prompts: most copied entries and new prompts over time.
 
-![Statistik-Dashboard](docs/examples/statics.png)
+![Statistics dashboard](docs/examples/statics.png)
 
-### Einstellungen
+### Settings
 
-Persönliche Präferenzen, Passwort ändern und globale Anwendungseinstellungen (Admin).
+Personal preferences, password change, and global application settings (admin).
 
-![Einstellungen](docs/examples/settings.png)
+![Settings](docs/examples/settings.png)
 
-### Benutzerverwaltung
+### User management
 
-Admin-Oberfläche zum Verwalten von Konten, Rollen und Status.
+Admin UI for managing accounts, roles, and status.
 
-![Benutzerverwaltung](docs/examples/usermanagement.png)
+![User management](docs/examples/usermanagement.png)
 
-**Social Preview:** Bild für Link-Vorschauen liegt unter [`.github/social-preview.png`](.github/social-preview.png) (1280×640). Einmalig unter *Settings → General → Social preview* hochladen.
+**Social preview:** Link preview image at [`.github/social-preview.png`](.github/social-preview.png) (1280×640). Upload once under *Settings → General → Social preview*.
 
 [![CI](https://github.com/erlkoenig91/prompt-db/actions/workflows/ci.yml/badge.svg)](https://github.com/erlkoenig91/prompt-db/actions/workflows/ci.yml)
 [![License: Non-Commercial](https://img.shields.io/badge/License-Non--Commercial-orange.svg)](LICENSE)
 
-## Dokumentation
+## Documentation
 
-| Thema | Datei |
-|-------|-------|
-| Architektur & API | [docs/architecture.md](docs/architecture.md) |
-| CI/CD & Container-Versionierung | [docs/ci-cd.md](docs/ci-cd.md) |
+| Topic | File |
+|-------|------|
+| Architecture & API | [docs/architecture.md](docs/architecture.md) |
+| CI/CD & container versioning | [docs/ci-cd.md](docs/ci-cd.md) |
 | Deployment (Compose, Kubernetes) | [docs/deployment.md](docs/deployment.md) |
 
-## Schnellstart (Docker Compose)
+## Quick start (Docker Compose)
 
 ```bash
 cp .env.example .env
-# SECRET_KEY setzen: openssl rand -hex 32
+# Set SECRET_KEY: openssl rand -hex 32
 
 docker compose up --build
 ```
 
-| Dienst | URL |
-|--------|-----|
-| Frontend | http://localhost (Port 80) |
-| Frontend (TLS) | https://localhost (Port 443, Zertifikate in `./certs/`) |
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost (port 80) |
+| Frontend (TLS) | https://localhost (port 443, certificates in `./certs/`) |
 | Backend API | http://localhost:8000 |
-| API Docs (Dev) | http://localhost:8000/docs |
+| API docs (dev) | http://localhost:8000/docs |
 
 ## Version
 
-Die aktuelle Version steht in [`VERSION`](VERSION) (aktuell **1.0.7**). Sie wird im Backend (`/health`, `/api/meta`), in der UI und in GitHub Releases verwendet.
+The current version is in [`VERSION`](VERSION) (currently **1.0.7**). It is used in the backend (`/health`, `/api/meta`), the UI, and GitHub Releases.
 
-Neue Version veröffentlichen:
+Publish a new version:
 
 ```bash
-# VERSION anpassen, committen, dann:
+# Update VERSION, commit, then:
 git tag v1.0.0
 git push origin main
 git push origin v1.0.0
 ```
 
-Bei Git-Tags baut die [Release-Pipeline](.github/workflows/release.yml) Container-Images und erstellt ein GitHub Release.
+Git tags trigger the [release pipeline](.github/workflows/release.yml) to build container images and create a GitHub Release.
 
 ## CI/CD (GitHub Actions)
 
-| Workflow | Auslöser | Zweck |
-|----------|----------|-------|
-| [ci.yml](.github/workflows/ci.yml) | Push/PR auf `main` | Backend- und Frontend-Validierung |
-| [release.yml](.github/workflows/release.yml) | Git-Tag `v*.*.*` | Images nach GHCR pushen + Release |
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| [ci.yml](.github/workflows/ci.yml) | Push/PR to `main` | Backend and frontend validation |
+| [release.yml](.github/workflows/release.yml) | Git tag `v*.*.*` | Push images to GHCR + release |
 
-**Container-Registry:** `ghcr.io/erlkoenig91/prompt-db-backend` und `prompt-db-frontend`
+**Container registry:** `ghcr.io/erlkoenig91/prompt-db-backend` and `prompt-db-frontend`
 
-Optional unter **Settings → Secrets and variables → Actions → Variables**:
+Optional under **Settings → Secrets and variables → Actions → Variables**:
 
 ```
-VITE_API_URL=https://api.deine-domain.de
+VITE_API_URL=https://api.your-domain.com
 ```
 
-(leer lassen, wenn die API über den nginx-Proxy im Frontend-Container erreichbar ist)
+(leave empty if the API is reachable via the nginx proxy in the frontend container)
 
 Details: [docs/ci-cd.md](docs/ci-cd.md)
 
 ## Features
 
-- Registrierung und Login mit JWT (Access + Refresh Token, Rotation)
-- Prompts: Titel, Text, Beschreibung, Modell, Aufgabe, Tags, privat/öffentlich
-- Suche mit Debounce, Aufgabenfilter, drei Ansichtsmodi (Liste, Kacheln, Kompakt)
-- Kopieren-Button pro Prompt mit Nutzungsstatistik
-- Statistik-Dashboard für öffentliche Prompts
-- Einstellungen: persönliche Präferenzen und globale App-Konfiguration (Admin)
-- Benutzerverwaltung: Konten aktivieren/deaktivieren, Rollen, Passwort-Reset (Admin)
-- Rate Limiting auf Auth-Endpunkten
-- Security Headers, Passwort-Policy, bcrypt-Hashing
-- Health (`/health`) und Readiness (`/ready`) für Kubernetes
+- Registration and login with JWT (access + refresh token, rotation)
+- Prompts: title, text, description, model, task, tags, private/public
+- Search with debounce, task filter, three view modes (list, tiles, compact)
+- Copy button per prompt with usage statistics
+- Statistics dashboard for public prompts
+- Settings: personal preferences and global app configuration (admin)
+- User management: activate/deactivate accounts, roles, password reset (admin)
+- UI languages: English and German (toggle in the header)
+- Rate limiting on auth endpoints
+- Security headers, password policy, bcrypt hashing
+- Health (`/health`) and readiness (`/ready`) for Kubernetes
 
 ## Kubernetes
 
 ```bash
 kubectl apply -f k8s/namespace.yaml
 kubectl apply -f k8s/configmap.yaml
-# k8s/secret.example.yaml → secret.yaml anpassen und anwenden
+# Copy k8s/secret.example.yaml → secret.yaml, adjust values, then apply
 kubectl apply -f k8s/postgres.yaml
 kubectl apply -f k8s/backend.yaml
 kubectl apply -f k8s/frontend.yaml
 kubectl apply -f k8s/ingress.yaml
 ```
 
-Image-Namen und Registry-Zugang: [docs/deployment.md](docs/deployment.md)
+Image names and registry access: [docs/deployment.md](docs/deployment.md)
 
-## Entwicklung lokal
+## Local development
 
 ```bash
 # Backend
@@ -136,21 +137,21 @@ export SECRET_KEY=dev-secret
 alembic upgrade head
 uvicorn app.main:app --reload
 
-# Frontend (separates Terminal)
+# Frontend (separate terminal)
 cd frontend
 npm install
 VITE_API_URL=http://localhost:8000 npm run dev
 ```
 
-## Manuelle Image-Erstellung
+## Manual image build
 
 ```bash
-export VITE_API_URL=https://api.deine-domain.de
+export VITE_API_URL=https://api.your-domain.com
 ./scripts/build-images.sh ghcr.io/erlkoenig91 1.0.0
 ```
 
-## Lizenz
+## License
 
-Open Source, **nicht-kommerziell**: Nutzung, Änderung und Weitergabe sind für private und nicht-kommerzielle Zwecke erlaubt. **Kommerzielle Nutzung** und **Relizenzierung** (Weitergabe unter anderer Lizenz oder als eigenes/zertifiziertes Produkt) sind ohne schriftliche Zustimmung nicht gestattet.
+Open source, **non-commercial**: use, modification, and distribution are allowed for private and non-commercial purposes. **Commercial use** and **relicensing** (distribution under another license or as a certified product) require written permission.
 
 Details: [LICENSE](LICENSE) – Copyright (c) Julian Kramer

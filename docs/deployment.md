@@ -1,16 +1,16 @@
 # Deployment
 
-Anleitung für lokale Entwicklung, Docker Compose und Kubernetes – inklusive Images aus GitHub Actions.
+Guide for local development, Docker Compose, and Kubernetes — including images from GitHub Actions.
 
-## Umgebungen
+## Environments
 
-| Umgebung | Compose-Datei | Images |
-|----------|---------------|--------|
-| Entwicklung | `docker-compose.yml` | Lokal gebaut |
-| Produktion (Compose) | `docker-compose.prod.yml` | Registry-Tags |
-| Kubernetes | `k8s/*.yaml` | Registry-Tags |
+| Environment | Compose file | Images |
+|-------------|--------------|--------|
+| Development | `docker-compose.yml` | Built locally |
+| Production (Compose) | `docker-compose.prod.yml` | Registry tags |
+| Kubernetes | `k8s/*.yaml` | Registry tags |
 
-## Lokale Entwicklung
+## Local development
 
 ```bash
 cp .env.example .env
@@ -19,39 +19,39 @@ cp .env.example .env
 docker compose up --build
 ```
 
-| Dienst | URL |
-|--------|-----|
+| Service | URL |
+|---------|-----|
 | Frontend | http://localhost |
-| Frontend (HTTPS) | https://localhost (mit Zertifikaten in `certs/`) |
+| Frontend (HTTPS) | https://localhost (with certificates in `certs/`) |
 | Backend | http://localhost:8000 |
-| API-Docs | http://localhost:8000/docs |
+| API docs | http://localhost:8000/docs |
 
-PostgreSQL ist auf Port `5432` erreichbar.
+PostgreSQL is reachable on port `5432`.
 
-### HTTPS lokal aktivieren
+### Enable HTTPS locally
 
-Zertifikate nach `certs/tls.crt` und `certs/tls.key` legen, dann Stack neu starten:
+Place certificates at `certs/tls.crt` and `certs/tls.key`, then restart the stack:
 
 ```bash
 docker compose up -d --build frontend
 ```
 
-Ohne Zertifikate antwortet das Frontend nur per HTTP auf Port 80.
+Without certificates, the frontend only serves HTTP on port 80.
 
-## Produktion mit Docker Compose
+## Production with Docker Compose
 
-Voraussetzung: Images aus GHCR (siehe [ci-cd.md](./ci-cd.md)).
+Prerequisite: images from GHCR (see [ci-cd.md](./ci-cd.md)).
 
 ```bash
 cp .env.example .env
 ```
 
-Wichtige Variablen in `.env`:
+Important variables in `.env`:
 
 ```env
 IMAGE_REGISTRY=ghcr.io/erlkoenig91
 TAG=1.0.0
-DATABASE_URL=postgresql+asyncpg://promptdb:<passwort>@postgres:5432/promptdb
+DATABASE_URL=postgresql+asyncpg://promptdb:<password>@postgres:5432/promptdb
 SECRET_KEY=<openssl rand -hex 32>
 ALLOW_REGISTRATION=true
 CORS_ORIGINS=https://prompt-db.example.com
@@ -59,36 +59,36 @@ ENVIRONMENT=production
 TRUST_PROXY_HEADERS=true
 ```
 
-Start mit externer PostgreSQL oder ergänztem Postgres-Service:
+Start with external PostgreSQL or an added Postgres service:
 
 ```bash
 docker compose -f docker-compose.prod.yml up -d
 ```
 
-`docker-compose.prod.yml` erwartet die Images:
+`docker-compose.prod.yml` expects these images:
 
 - `${IMAGE_REGISTRY}/prompt-db-backend:${TAG}`
 - `${IMAGE_REGISTRY}/prompt-db-frontend:${TAG}`
 
 ## Kubernetes
 
-### 1. Vorbereitung
+### 1. Preparation
 
 ```bash
 kubectl apply -f k8s/namespace.yaml
 kubectl apply -f k8s/configmap.yaml
 ```
 
-`k8s/configmap.yaml` anpassen:
+Adjust `k8s/configmap.yaml`:
 
-- `CORS_ORIGINS` → Frontend-URL
-- `VITE_API_URL` → Backend-URL (Referenz für Dokumentation; Frontend-Image wird beim Build gebaked)
+- `CORS_ORIGINS` → frontend URL
+- `VITE_API_URL` → backend URL (reference for docs; frontend image is baked at build time)
 
-Secret aus Vorlage:
+Secret from template:
 
 ```bash
 cp k8s/secret.example.yaml k8s/secret.yaml
-# Werte setzen, Datei nicht committen
+# Set values; do not commit this file
 kubectl apply -f k8s/secret.yaml
 ```
 
@@ -98,18 +98,18 @@ kubectl apply -f k8s/secret.yaml
 kubectl create secret docker-registry ghcr-registry \
   --docker-server=ghcr.io \
   --docker-username=erlkoenig91 \
-  --docker-password=<github-pat-mit-read:packages> \
+  --docker-password=<github-pat-with-read:packages> \
   -n prompt-db
 ```
 
-In `k8s/backend.yaml` und `k8s/frontend.yaml` unter `spec.template.spec` ergänzen:
+Add under `spec.template.spec` in `k8s/backend.yaml` and `k8s/frontend.yaml`:
 
 ```yaml
 imagePullSecrets:
   - name: ghcr-registry
 ```
 
-Image-Zeilen (Platzhalter in den Manifesten):
+Image lines (placeholders in manifests):
 
 ```yaml
 image: ghcr.io/erlkoenig91/prompt-db-backend:1.0.0
@@ -124,9 +124,11 @@ kubectl apply -f k8s/frontend.yaml
 kubectl apply -f k8s/ingress.yaml
 ```
 
-Ingress-Hosts in `k8s/ingress.yaml` an die echte Domain anpassen.
+Adjust ingress hosts in `k8s/ingress.yaml` to your real domain.
 
-### 4. Upgrade nach neuem Release
+For production clusters with nginx ingress and cert-manager, use `k8s/ingress-nginx.yaml` instead of `k8s/ingress.yaml`.
+
+### 4. Upgrade after a new release
 
 ```bash
 export REGISTRY=ghcr.io/erlkoenig91
@@ -141,40 +143,40 @@ kubectl rollout status deployment/prompt-db-backend -n prompt-db
 kubectl rollout status deployment/prompt-db-frontend -n prompt-db
 ```
 
-## Konfigurationsreferenz
+## Configuration reference
 
 ### Backend
 
-| Variable | Beschreibung |
-|----------|--------------|
+| Variable | Description |
+|----------|-------------|
 | `DATABASE_URL` | PostgreSQL async URL |
-| `SECRET_KEY` | JWT-Signatur (min. 32 Zeichen Hex empfohlen) |
-| `ALLOW_REGISTRATION` | `true`/`false` – Registrierung erlauben |
-| `CORS_ORIGINS` | Kommaseparierte erlaubte Origins |
-| `ENVIRONMENT` | `development` oder `production` |
-| `TRUST_PROXY_HEADERS` | `true` hinter Ingress/Reverse Proxy |
+| `SECRET_KEY` | JWT signing (32+ hex characters recommended) |
+| `ALLOW_REGISTRATION` | `true`/`false` – allow registration |
+| `CORS_ORIGINS` | Comma-separated allowed origins |
+| `ENVIRONMENT` | `development` or `production` |
+| `TRUST_PROXY_HEADERS` | `true` behind ingress/reverse proxy |
 
-### Frontend (Build-Zeit)
+### Frontend (build time)
 
-| Variable | Beschreibung |
-|----------|--------------|
-| `VITE_API_URL` | Backend-URL für API-Aufrufe und CSP `connect-src` |
+| Variable | Description |
+|----------|-------------|
+| `VITE_API_URL` | Backend URL for API calls and CSP `connect-src` |
 
-Änderungen an `VITE_API_URL` erfordern einen **Neubau** des Frontend-Images.
+Changes to `VITE_API_URL` require a **rebuild** of the frontend image.
 
-## Health Checks
+## Health checks
 
-| Dienst | Endpoint |
-|--------|----------|
-| Backend Liveness | `GET /health` |
-| Backend Readiness | `GET /ready` |
+| Service | Endpoint |
+|---------|----------|
+| Backend liveness | `GET /health` |
+| Backend readiness | `GET /ready` |
 | Frontend | `GET /health` |
 
-## Sicherheit (Checkliste)
+## Security checklist
 
-- [ ] `SECRET_KEY` und DB-Passwörter nur als Secrets
-- [ ] `ALLOW_REGISTRATION` nach Bedarf gesetzt
-- [ ] CORS auf Frontend-Origin begrenzt
-- [ ] TLS am Ingress / Reverse Proxy
-- [ ] Registry-Zugang über PAT mit minimalen Rechten
-- [ ] Swagger/ReDoc nur in `development` (automatisch deaktiviert in Prod)
+- [ ] `SECRET_KEY` and DB passwords only as secrets
+- [ ] `ALLOW_REGISTRATION` set as needed
+- [ ] CORS limited to frontend origin
+- [ ] TLS at ingress / reverse proxy
+- [ ] Registry access via PAT with minimal scopes
+- [ ] Swagger/ReDoc only in `development` (disabled automatically in prod)

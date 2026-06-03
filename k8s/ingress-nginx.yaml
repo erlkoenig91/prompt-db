@@ -1,4 +1,4 @@
-# Produktion: nginx Ingress Controller + cert-manager (Let's Encrypt)
+# Production: nginx ingress controller + cert-manager (Let's Encrypt)
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:

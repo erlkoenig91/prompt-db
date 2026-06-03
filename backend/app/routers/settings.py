@@ -105,7 +105,7 @@ async def change_password(
     current_user: User = Depends(get_current_user),
 ) -> UserResponse:
     if not verify_password(payload.current_password, current_user.hashed_password):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Aktuelles Passwort ist falsch")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect")
     current_user.hashed_password = hash_password(payload.new_password)
     await db.flush()
     return to_user_response(current_user)

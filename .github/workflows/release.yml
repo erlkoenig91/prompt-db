@@ -140,16 +140,16 @@ jobs:
         with:
           generate_release_notes: true
           body: |
-            ## Container-Images
+            ## Container images
 
-            | Komponente | Image |
-            |------------|-------|
+            | Component | Image |
+            |-----------|-------|
             | Backend | `${{ env.REGISTRY }}/${{ github.repository_owner }}/prompt-db-backend:${{ needs.resolve-version.outputs.app_version }}` |
             | Frontend | `${{ env.REGISTRY }}/${{ github.repository_owner }}/prompt-db-frontend:${{ needs.resolve-version.outputs.app_version }}` |
 
-            Multi-Arch: `linux/amd64`, `linux/arm64` (native Runner, kein QEMU für npm).
+            Multi-arch: `linux/amd64`, `linux/arm64` (native runners, no QEMU for npm).
 
-            Zusätzliche Tags: `${{ github.sha }}`, `latest`
+            Additional tags: `${{ github.sha }}`, `latest`
 
             ## Deployment
 

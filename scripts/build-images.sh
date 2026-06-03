@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Registry-Pfad als erstes Argument, Tag als zweites.
-# Beispiel:
+# First argument: registry path, second: tag.
+# Examples:
 #   ./scripts/build-images.sh ghcr.io/me 1.0.0
 #   PUSH=1 ./scripts/build-images.sh ghcr.io/me 1.0.0
 
@@ -24,7 +24,7 @@ if [ "${PUSH}" = "1" ]; then
   push_args=(--push)
 else
   push_args=(--load)
-  echo "Hinweis: --load unterstützt nur eine Plattform. Setze PUSH=1 für Multi-Arch-Push."
+  echo "Note: --load supports one platform only. Set PUSH=1 for multi-arch push."
   PLATFORMS="linux/$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')"
 fi
 
@@ -48,6 +48,6 @@ echo "  ${BACKEND_IMAGE}"
 echo "  ${FRONTEND_IMAGE}"
 if [ "${PUSH}" != "1" ]; then
   echo ""
-  echo "Multi-Arch Push:"
+  echo "Multi-arch push:"
   echo "  PUSH=1 ./scripts/build-images.sh ${REGISTRY} ${TAG}"
 fi

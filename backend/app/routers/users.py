@@ -53,7 +53,7 @@ async def update_user(
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Benutzer nicht gefunden")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     updates = payload.model_dump(exclude_unset=True)
 
@@ -61,18 +61,18 @@ async def update_user(
         if user.id == current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Eigene Administratorrechte können nicht entzogen werden",
+                detail="Cannot revoke your own administrator privileges",
             )
         if await _count_admins(db) <= 1:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Der letzte Administrator kann nicht entfernt werden",
+                detail="Cannot remove the last administrator",
             )
 
     if updates.get("is_active") is False and user.id == current_user.id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Das eigene Konto kann nicht deaktiviert werden",
+            detail="Cannot deactivate your own account",
         )
 
     for key, value in updates.items():
@@ -101,7 +101,7 @@ async def reset_user_password(
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Benutzer nicht gefunden")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     user.hashed_password = hash_password(payload.new_password)
     await db.flush()
 
@@ -115,18 +115,18 @@ async def delete_user(
     if user_id == current_user.id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Das eigene Konto kann nicht gelöscht werden",
+            detail="Cannot delete your own account",
         )
 
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Benutzer nicht gefunden")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     if user.is_admin and await _count_admins(db) <= 1:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Der letzte Administrator kann nicht gelöscht werden",
+            detail="Cannot delete the last administrator",
         )
 
     await db.delete(user)

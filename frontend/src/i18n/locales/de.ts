@@ -184,25 +184,23 @@ const de = {
     passwordSetFailed: "Passwort konnte nicht gesetzt werden",
   },
   apiErrors: {
-    "Nicht authentifiziert": "Nicht authentifiziert",
-    "Ungültiger Token": "Ungültiger Token",
-    "Benutzer nicht gefunden": "Benutzer nicht gefunden",
-    "Administratorrechte erforderlich": "Administratorrechte erforderlich",
-    "Eigene Administratorrechte können nicht entzogen werden":
+    "Not authenticated": "Nicht authentifiziert",
+    "Invalid token": "Ungültiger Token",
+    "User not found": "Benutzer nicht gefunden",
+    "Administrator privileges required": "Administratorrechte erforderlich",
+    "Cannot revoke your own administrator privileges":
       "Eigene Administratorrechte können nicht entzogen werden",
-    "Der letzte Administrator kann nicht entfernt werden":
-      "Der letzte Administrator kann nicht entfernt werden",
-    "Das eigene Konto kann nicht deaktiviert werden": "Das eigene Konto kann nicht deaktiviert werden",
-    "Das eigene Konto kann nicht gelöscht werden": "Das eigene Konto kann nicht gelöscht werden",
-    "Der letzte Administrator kann nicht gelöscht werden":
-      "Der letzte Administrator kann nicht gelöscht werden",
-    "Aktuelles Passwort ist falsch": "Aktuelles Passwort ist falsch",
-    "Registrierung deaktiviert": "Registrierung deaktiviert",
-    "Benutzername bereits vergeben": "Benutzername bereits vergeben",
-    "Ungültige Anmeldedaten": "Ungültige Anmeldedaten",
-    "Ungültiger Refresh-Token": "Ungültiger Refresh-Token",
-    "Anmeldung erforderlich": "Anmeldung erforderlich",
-    "Prompt nicht gefunden": "Prompt nicht gefunden",
+    "Cannot remove the last administrator": "Der letzte Administrator kann nicht entfernt werden",
+    "Cannot deactivate your own account": "Das eigene Konto kann nicht deaktiviert werden",
+    "Cannot delete your own account": "Das eigene Konto kann nicht gelöscht werden",
+    "Cannot delete the last administrator": "Der letzte Administrator kann nicht gelöscht werden",
+    "Current password is incorrect": "Aktuelles Passwort ist falsch",
+    "Registration disabled": "Registrierung deaktiviert",
+    "Username already taken": "Benutzername bereits vergeben",
+    "Invalid credentials": "Ungültige Anmeldedaten",
+    "Invalid refresh token": "Ungültiger Refresh-Token",
+    "Sign-in required": "Anmeldung erforderlich",
+    "Prompt not found": "Prompt nicht gefunden",
   },
 } as const;
 

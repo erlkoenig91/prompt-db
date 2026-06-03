@@ -30,8 +30,7 @@ export function detectLocale(): Locale {
   if (stored === "de" || stored === "en") {
     return stored;
   }
-  const browser = navigator.language.toLowerCase();
-  return browser.startsWith("de") ? "de" : "en";
+  return "en";
 }
 
 export function createTranslator(locale: Locale) {
