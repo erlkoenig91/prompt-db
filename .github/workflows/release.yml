@@ -172,6 +172,7 @@ jobs:
           git worktree add /tmp/gh-pages gh-pages
           cp "/tmp/charts/prompt-db-${APP_VERSION}.tgz" /tmp/gh-pages/
           cp helm/artifacthub-repo.yml /tmp/gh-pages/
+          touch /tmp/gh-pages/.nojekyll
           cd /tmp/gh-pages
           if [ -f index.yaml ]; then
             helm repo index . --url "${CHARTS_REPO_URL}" --merge index.yaml
