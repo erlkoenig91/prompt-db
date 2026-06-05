@@ -3,7 +3,7 @@
 #
 # After registering the repo at https://artifacthub.io/control-panel/repositories,
 # paste the repository ID from the control panel below to become a verified publisher.
-# repositoryID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+repositoryID: ac3271e8-37ce-46ca-ae5d-a76261f03c57
 owners:
   - name: erlkoenig91
     email: erlkoenig91@users.noreply.github.com
