@@ -79,7 +79,8 @@ jobs:
 
       - name: Export digest
         run: |
-          mkdir -p /tmp/digests
+          DIGEST_DIR="/tmp/digests/$(dirname '${{ matrix.platform }}')"
+          mkdir -p "$DIGEST_DIR"
           echo "${{ steps.build.outputs.digest }}" > "/tmp/digests/${{ matrix.platform }}.digest"
 
       - uses: actions/upload-artifact@v4
@@ -155,7 +156,7 @@ jobs:
           if ! git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
             EMPTY_TREE="$(git hash-object -t tree /dev/null)"
             INIT_COMMIT="$(git commit-tree "$EMPTY_TREE" -m "Initialize gh-pages for Helm charts")"
-            git push origin "$INIT_COMMIT:gh-pages"
+            git push origin "$INIT_COMMIT:refs/heads/gh-pages"
           fi
 
       - name: Publish chart to GitHub Pages
