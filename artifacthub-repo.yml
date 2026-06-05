@@ -1,0 +1,9 @@
+# Artifact Hub repository metadata.
+# Served from the gh-pages branch (same level as index.yaml).
+#
+# After registering the repo at https://artifacthub.io/control-panel/repositories,
+# paste the repository ID from the control panel below to become a verified publisher.
+# repositoryID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+owners:
+  - name: erlkoenig91
+    email: erlkoenig91@users.noreply.github.com
