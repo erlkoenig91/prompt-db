@@ -41,18 +41,22 @@ jobs:
           - image: prompt-db-backend
             file: backend/Dockerfile
             platform: linux/amd64
+            platform_slug: linux-amd64
             runner: ubuntu-latest
           - image: prompt-db-backend
             file: backend/Dockerfile
             platform: linux/arm64
+            platform_slug: linux-arm64
             runner: ubuntu-24.04-arm
           - image: prompt-db-frontend
             file: frontend/Dockerfile
             platform: linux/amd64
+            platform_slug: linux-amd64
             runner: ubuntu-latest
           - image: prompt-db-frontend
             file: frontend/Dockerfile
             platform: linux/arm64
+            platform_slug: linux-arm64
             runner: ubuntu-24.04-arm
     runs-on: ${{ matrix.runner }}
     steps:
@@ -79,14 +83,13 @@ jobs:
 
       - name: Export digest
         run: |
-          DIGEST_DIR="/tmp/digests/$(dirname '${{ matrix.platform }}')"
-          mkdir -p "$DIGEST_DIR"
-          echo "${{ steps.build.outputs.digest }}" > "/tmp/digests/${{ matrix.platform }}.digest"
+          mkdir -p /tmp/digests
+          echo "${{ steps.build.outputs.digest }}" > "/tmp/digests/${{ matrix.image }}-${{ matrix.platform_slug }}.digest"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: digests-${{ matrix.image }}-${{ matrix.platform }}
-          path: /tmp/digests/
+          name: digests-${{ matrix.image }}-${{ matrix.platform_slug }}
+          path: /tmp/digests/${{ matrix.image }}-${{ matrix.platform_slug }}.digest
           if-no-files-found: error
           retention-days: 1
 
@@ -117,8 +120,8 @@ jobs:
           VERSION: ${{ needs.resolve-version.outputs.app_version }}
           SHA: ${{ github.sha }}
         run: |
-          AMD64_DIGEST="$(tr -d '[:space:]' < /tmp/digests/linux/amd64.digest)"
-          ARM64_DIGEST="$(tr -d '[:space:]' < /tmp/digests/linux/arm64.digest)"
+          AMD64_DIGEST="$(tr -d '[:space:]' < /tmp/digests/${{ matrix.image }}-linux-amd64.digest)"
+          ARM64_DIGEST="$(tr -d '[:space:]' < /tmp/digests/${{ matrix.image }}-linux-arm64.digest)"
           echo "amd64: ${AMD64_DIGEST}"
           echo "arm64: ${ARM64_DIGEST}"
           docker buildx imagetools create \
@@ -160,26 +163,24 @@ jobs:
           fi
 
       - name: Publish chart to GitHub Pages
-        uses: helm/chart-releaser-action@v1.6.0
-        with:
-          charts_dir: helm
-          config: cr.yaml
         env:
-          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-
-      - name: Publish Artifact Hub metadata
+          APP_VERSION: ${{ needs.resolve-version.outputs.app_version }}
+          CHARTS_REPO_URL: https://erlkoenig91.github.io/prompt-db
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          helm package helm/prompt-db -d /tmp/charts
           git fetch origin gh-pages
           git worktree add /tmp/gh-pages gh-pages
+          cp "/tmp/charts/prompt-db-${APP_VERSION}.tgz" /tmp/gh-pages/
           cp helm/artifacthub-repo.yml /tmp/gh-pages/
           cd /tmp/gh-pages
-          git add artifacthub-repo.yml
-          if ! git diff --staged --quiet; then
-            git commit -m "chore: update Artifact Hub repository metadata"
-            git push origin gh-pages
+          if [ -f index.yaml ]; then
+            helm repo index . --url "${CHARTS_REPO_URL}" --merge index.yaml
+          else
+            helm repo index . --url "${CHARTS_REPO_URL}"
           fi
+          git add .
+          git commit -m "Publish prompt-db chart ${APP_VERSION}"
+          git push origin gh-pages
 
   release:
     needs: [resolve-version, merge, helm-release]
