@@ -86,7 +86,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: digests-${{ matrix.image }}-${{ matrix.platform }}
-          path: /tmp/digests/*.digest
+          path: /tmp/digests/
           if-no-files-found: error
           retention-days: 1
 

@@ -4,4 +4,5 @@ package-path: .cr-release-packages
 charts-repo: https://erlkoenig91.github.io/prompt-db
 charts-repo-branch: gh-pages
 tag-name-template: "v{{ .Version }}"
+make-release: false
 skip_upload: true
