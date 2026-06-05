@@ -41,18 +41,22 @@ jobs:
           - image: prompt-db-backend
             file: backend/Dockerfile
             platform: linux/amd64
+            platform_slug: linux-amd64
             runner: ubuntu-latest
           - image: prompt-db-backend
             file: backend/Dockerfile
             platform: linux/arm64
+            platform_slug: linux-arm64
             runner: ubuntu-24.04-arm
           - image: prompt-db-frontend
             file: frontend/Dockerfile
             platform: linux/amd64
+            platform_slug: linux-amd64
             runner: ubuntu-latest
           - image: prompt-db-frontend
             file: frontend/Dockerfile
             platform: linux/arm64
+            platform_slug: linux-arm64
             runner: ubuntu-24.04-arm
     runs-on: ${{ matrix.runner }}
     steps:
@@ -76,7 +80,7 @@ jobs:
           push: true
           build-args: ${{ matrix.image == 'prompt-db-frontend' && format('VITE_API_URL={0}', vars.VITE_API_URL) || '' }}
           tags: |
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image }}:${{ needs.resolve-version.outputs.app_version }}-${{ matrix.platform }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image }}:${{ needs.resolve-version.outputs.app_version }}-${{ matrix.platform_slug }}
           outputs: type=image,push-by-digest=true,name=${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image }},name-canonical=true
 
       - name: Export digest
@@ -149,6 +153,19 @@ jobs:
 
       - name: Lint chart
         run: helm lint helm/prompt-db
+
+      - name: Ensure gh-pages branch exists
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if ! git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            CURRENT_REF="$(git rev-parse HEAD)"
+            git switch --orphan gh-pages-init
+            git reset --hard
+            git commit --allow-empty -m "Initialize gh-pages for Helm charts"
+            git push origin HEAD:gh-pages
+            git checkout "$CURRENT_REF"
+          fi
 
       - name: Publish chart to GitHub Pages
         uses: helm/chart-releaser-action@v1.6.0
