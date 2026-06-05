@@ -1,0 +1,105 @@
+nameOverride: ""
+fullnameOverride: ""
+
+namespace:
+  # When true, the chart creates a dedicated Namespace resource.
+  create: false
+  # Used in resource metadata when create is true; otherwise Release.Namespace applies.
+  name: prompt-db
+
+imageRegistry: ghcr.io/erlkoenig91
+imagePullSecrets: []
+# - name: ghcr-registry
+
+backend:
+  replicaCount: 2
+  image:
+    repository: prompt-db-backend
+    tag: ""
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    fsGroup: 1000
+
+frontend:
+  replicaCount: 2
+  image:
+    repository: prompt-db-frontend
+    tag: ""
+    pullPolicy: Always
+  resources:
+    requests:
+      memory: 64Mi
+      cpu: 50m
+    limits:
+      memory: 128Mi
+      cpu: 200m
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 101
+    fsGroup: 101
+
+postgresql:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "16-alpine"
+  auth:
+    database: promptdb
+    username: promptdb
+  persistence:
+    enabled: true
+    size: 5Gi
+    storageClass: ""
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 70
+    fsGroup: 70
+
+config:
+  allowRegistration: "true"
+  corsOrigins: "http://prompt-db.example.com,https://prompt-db.example.com"
+  environment: production
+  trustProxyHeaders: "true"
+  # Reference for docs; frontend image is baked at build time.
+  viteApiUrl: ""
+
+secrets:
+  # When false, set existingSecret to a pre-created Secret name.
+  create: true
+  existingSecret: ""
+  postgresPassword: change-me
+  secretKey: change-me-use-openssl-rand-hex-32
+  # Required when postgresql.enabled is false.
+  databaseUrl: ""
+
+ingress:
+  enabled: true
+  # traefik (k3s/Rancher Desktop) or nginx (production with cert-manager)
+  className: traefik
+  annotations: {}
+  # Example for nginx + cert-manager:
+  # annotations:
+  #   nginx.ingress.kubernetes.io/proxy-body-size: "2m"
+  #   cert-manager.io/cluster-issuer: letsencrypt-prod
+  tls:
+    enabled: false
+    secretName: prompt-db-tls
+  hosts:
+    frontend: prompt-db.example.com
+    api: api.prompt-db.example.com

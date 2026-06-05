@@ -1,0 +1,8 @@
+# Overlay for production clusters with nginx ingress + cert-manager.
+ingress:
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "2m"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  tls:
+    enabled: true

@@ -8,12 +8,16 @@ Workflows under [`.github/workflows/`](../.github/workflows/) validate pull requ
 flowchart LR
   V1[validate:backend] --> R[release on tag]
   V2[validate:frontend] --> R
+  V3[validate:helm] --> R
+  R --> GHCR[GHCR images]
+  R --> Pages[GitHub Pages Helm repo]
+  R --> AH[Artifact Hub]
 ```
 
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
-| `ci.yml` | Push/PR to `main` | Python syntax, Alembic history, frontend build |
-| `release.yml` | Git tag `v*.*.*` or manual | Push images to GHCR, GitHub Release |
+| `ci.yml` | Push/PR to `main` | Python syntax, Alembic history, frontend build, Helm lint |
+| `release.yml` | Git tag `v*.*.*` or manual | Push images to GHCR, publish Helm chart, GitHub Release |
 
 Release builds use native `ubuntu-latest` (amd64) and `ubuntu-24.04-arm` (arm64) runners, then merge multi-arch manifests.
 
@@ -42,6 +46,7 @@ The pipeline produces:
 
 - `ghcr.io/erlkoenig91/prompt-db-backend:1.1.0`
 - `ghcr.io/erlkoenig91/prompt-db-frontend:1.1.0`
+- Helm chart `prompt-db` version `1.1.0` at `https://erlkoenig91.github.io/prompt-db`
 
 Additional tags: `${{ github.sha }}`, `latest`
 
@@ -100,7 +105,51 @@ export VITE_API_URL=https://api.example.com
 ./scripts/build-images.sh ghcr.io/erlkoenig91 1.0.0
 ```
 
+## Helm chart publishing
+
+On each git tag `v*.*.*`, the `helm-release` job in `release.yml`:
+
+1. Syncs `helm/prompt-db/Chart.yaml` (`version` + `appVersion`) to the release version
+2. Runs `helm lint`
+3. Publishes the packaged chart to the `gh-pages` branch via [chart-releaser](https://github.com/helm/chart-releaser)
+4. Copies `helm/artifacthub-repo.yml` to the chart repository root (for Artifact Hub verification)
+
+Configuration: [`cr.yaml`](../cr.yaml)
+
+### GitHub Pages setup (one-time)
+
+In the GitHub repository settings → **Pages** → **Build and deployment**:
+
+- Source: **Deploy from a branch**
+- Branch: `gh-pages` / `/ (root)`
+
+After the first release tag, verify:
+
+```bash
+curl -fsSL https://erlkoenig91.github.io/prompt-db/index.yaml
+helm repo add prompt-db https://erlkoenig91.github.io/prompt-db
+```
+
+### Artifact Hub
+
+1. Register `https://erlkoenig91.github.io/prompt-db` as a Helm repository on [Artifact Hub](https://artifacthub.io/control-panel/repositories)
+2. Add the `repositoryID` to [`helm/artifacthub-repo.yml`](../helm/artifacthub-repo.yml) and push — the next release republishes it
+
+Details: [deployment.md](./deployment.md#6-artifact-hub)
+
 ## Kubernetes deployment with CI images
+
+### Helm (recommended)
+
+```bash
+helm repo add prompt-db https://erlkoenig91.github.io/prompt-db
+helm repo update
+helm upgrade --install prompt-db prompt-db/prompt-db -n prompt-db --create-namespace \
+  --set backend.image.tag=1.0.0 \
+  --set frontend.image.tag=1.0.0
+```
+
+### Raw manifests
 
 Adjust in `k8s/backend.yaml` and `k8s/frontend.yaml`:
 

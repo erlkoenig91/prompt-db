@@ -4,11 +4,12 @@ Guide for local development, Docker Compose, and Kubernetes — including images
 
 ## Environments
 
-| Environment | Compose file | Images |
-|-------------|--------------|--------|
+| Environment | Compose file | Images / Charts |
+|-------------|--------------|-----------------|
 | Development | `docker-compose.yml` | Built locally |
 | Production (Compose) | `docker-compose.prod.yml` | Registry tags |
-| Kubernetes | `k8s/*.yaml` | Registry tags |
+| Kubernetes (manifests) | `k8s/*.yaml` | Registry tags |
+| Kubernetes (Helm) | `helm/prompt-db` | Registry tags + [Helm repo](https://erlkoenig91.github.io/prompt-db) |
 
 ## Local development
 
@@ -70,7 +71,101 @@ docker compose -f docker-compose.prod.yml up -d
 - `${IMAGE_REGISTRY}/prompt-db-backend:${TAG}`
 - `${IMAGE_REGISTRY}/prompt-db-frontend:${TAG}`
 
-## Kubernetes
+## Kubernetes (Helm)
+
+Recommended for production. The chart is published automatically on each release tag to GitHub Pages and can be listed on [Artifact Hub](https://artifacthub.io).
+
+### 1. Add the Helm repository
+
+```bash
+helm repo add prompt-db https://erlkoenig91.github.io/prompt-db
+helm repo update
+```
+
+### 2. Install
+
+```bash
+helm install prompt-db prompt-db/prompt-db \
+  -n prompt-db --create-namespace \
+  --set secrets.postgresPassword='<password>' \
+  --set secrets.secretKey='<openssl rand -hex 32>' \
+  --set config.corsOrigins='https://prompt-db.example.com' \
+  --set ingress.hosts.frontend='prompt-db.example.com' \
+  --set ingress.hosts.api='api.prompt-db.example.com'
+```
+
+For clusters with **nginx ingress** and **cert-manager**:
+
+```bash
+helm install prompt-db prompt-db/prompt-db \
+  -n prompt-db --create-namespace \
+  -f helm/prompt-db/values-nginx.yaml \
+  --set secrets.postgresPassword='<password>' \
+  --set secrets.secretKey='<openssl rand -hex 32>'
+```
+
+### 3. ImagePullSecret (GHCR)
+
+If images are private, create a pull secret and pass it to the chart:
+
+```bash
+kubectl create secret docker-registry ghcr-registry \
+  --docker-server=ghcr.io \
+  --docker-username=erlkoenig91 \
+  --docker-password=<github-pat-with-read:packages> \
+  -n prompt-db
+
+helm upgrade prompt-db prompt-db/prompt-db \
+  -n prompt-db \
+  --set imagePullSecrets[0].name=ghcr-registry
+```
+
+### 4. Upgrade after a new release
+
+```bash
+helm repo update
+helm upgrade prompt-db prompt-db/prompt-db \
+  -n prompt-db \
+  --set backend.image.tag=1.1.0 \
+  --set frontend.image.tag=1.1.0
+```
+
+When no explicit tag is set, the chart defaults to `Chart.appVersion` from the release.
+
+### 5. External PostgreSQL
+
+Disable the bundled database and provide a connection string:
+
+```bash
+helm install prompt-db prompt-db/prompt-db \
+  -n prompt-db --create-namespace \
+  --set postgresql.enabled=false \
+  --set secrets.databaseUrl='postgresql+asyncpg://user:pass@db.example.com:5432/promptdb' \
+  --set secrets.secretKey='<openssl rand -hex 32>'
+```
+
+### 6. Artifact Hub
+
+After the first chart release (Git tag `v*.*.*`), register the repository on Artifact Hub:
+
+1. Sign in at [artifacthub.io](https://artifacthub.io) → **Control Panel** → **Add repository**
+2. Kind: **Helm charts**
+3. URL: `https://erlkoenig91.github.io/prompt-db`
+4. Copy the **repository ID** from the control panel
+5. Uncomment and set `repositoryID` in [`helm/artifacthub-repo.yml`](../helm/artifacthub-repo.yml), commit, and push — the release pipeline republishes the file to `gh-pages`
+6. Wait for the next Artifact Hub sync (verified publisher badge)
+
+Verify locally before registering:
+
+```bash
+curl -fsSL https://erlkoenig91.github.io/prompt-db/index.yaml
+helm repo add prompt-db https://erlkoenig91.github.io/prompt-db
+helm search repo prompt-db
+```
+
+## Kubernetes (raw manifests)
+
+Alternative without Helm — manifests in `k8s/`.
 
 ### 1. Preparation
 
@@ -92,7 +187,7 @@ cp k8s/secret.example.yaml k8s/secret.yaml
 kubectl apply -f k8s/secret.yaml
 ```
 
-### 2. ImagePullSecret (GHCR)
+### 2. ImagePullSecret (GHCR, manifests)
 
 ```bash
 kubectl create secret docker-registry ghcr-registry \
@@ -115,7 +210,7 @@ Image lines (placeholders in manifests):
 image: ghcr.io/erlkoenig91/prompt-db-backend:1.0.0
 ```
 
-### 3. Deploy
+### 3. Deploy (manifests)
 
 ```bash
 kubectl apply -f k8s/postgres.yaml
@@ -128,7 +223,7 @@ Adjust ingress hosts in `k8s/ingress.yaml` to your real domain.
 
 For production clusters with nginx ingress and cert-manager, use `k8s/ingress-nginx.yaml` instead of `k8s/ingress.yaml`.
 
-### 4. Upgrade after a new release
+### 4. Upgrade after a new release (manifests)
 
 ```bash
 export REGISTRY=ghcr.io/erlkoenig91

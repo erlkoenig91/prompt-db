@@ -1,0 +1,33 @@
+prompt-db has been deployed.
+
+Release:   {{ .Release.Name }}
+Namespace: {{ include "prompt-db.namespace" . }}
+
+{{- if .Values.ingress.enabled }}
+
+Ingress:
+  Frontend: http{{ if .Values.ingress.tls.enabled }}s{{ end }}://{{ .Values.ingress.hosts.frontend }}
+  API:      http{{ if .Values.ingress.tls.enabled }}s{{ end }}://{{ .Values.ingress.hosts.api }}
+{{- else }}
+
+Port-forward the frontend service:
+
+  kubectl port-forward svc/{{ include "prompt-db.frontend.fullname" . }} 8080:80 -n {{ include "prompt-db.namespace" . }}
+
+Then open http://localhost:8080
+{{- end }}
+
+Images:
+  Backend:  {{ include "prompt-db.backend.image" . }}
+  Frontend: {{ include "prompt-db.frontend.image" . }}
+
+{{- if .Values.postgresql.enabled }}
+PostgreSQL: {{ include "prompt-db.postgresql.fullname" . }}:5432
+{{- end }}
+
+Upgrade after a new release:
+
+  helm upgrade {{ .Release.Name }} ./helm/prompt-db \
+    -n {{ include "prompt-db.namespace" . }} \
+    --set backend.image.tag=<version> \
+    --set frontend.image.tag=<version>
